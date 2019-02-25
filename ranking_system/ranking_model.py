@@ -9,15 +9,15 @@ from ranking_agent import RankingAgent
 class RankingModel(Model):
     """The ranking model class."""
 
-    def __init__(self, number_of_agents, commodity_prices):
+    def __init__(self, number_of_agents, commodities):
         """Constructor for the RankingModel class.
 
-        :param commodity_prices: The commodity prices for this model.
+        :param commodities: The list of commodities.
         """
         super().__init__()
         self._agents = []
         self.agent_ranking = []
-        self.commodity_prices = commodity_prices
+        self.commodities = commodities
 
         # The RandomActivation scheduler activates all the agents once per
         # step, in random order.
@@ -25,10 +25,10 @@ class RankingModel(Model):
 
         # Create and schedule ranking agents.
         for agent_count in range(number_of_agents):
-                unique_id = "agent-{}".format(agent_count)
-                agent = RankingAgent(unique_id, self)
-                self._agents.append(agent)
-                self.schedule.add(agent)
+            unique_id = "agent-{}".format(agent_count)
+            agent = RankingAgent(unique_id, self)
+            self._agents.append(agent)
+            self.schedule.add(agent)
 
         # Setup a data collector
         self.data_collector = DataCollector(
