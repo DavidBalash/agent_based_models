@@ -1,8 +1,23 @@
 """Run the ranking model."""
 import matplotlib.pyplot as plt
+import pandas as pd
 from commodity import Commodity
 from matplotlib.ticker import FuncFormatter
 from ranking_model import RankingModel
+
+
+def _convert_to_ranking_data_frame(input_data_frame):
+    data_frame = pd.DataFrame(columns=['period', 'element', 'position'])
+    for row in input_data_frame.iterrows():
+        for agent in row[1]['Agent rank']:
+            position = row[1]['Agent rank']
+            ranking = pd.DataFrame([[row[0], agent, position[agent]]],
+                                   columns=['period', 'element', 'position'])
+            data_frame = data_frame.append(ranking, ignore_index=True)
+
+    data_frame.sort_values(['period', 'element'], inplace=True)
+    return data_frame.reset_index(0, drop=True)
+
 
 number_of_steps = 200
 number_of_agents = 5
@@ -12,6 +27,10 @@ commodities = [Commodity('commodity-1', 0.6, 0.2),
 model = RankingModel(number_of_agents, commodities)
 for _ in range(number_of_steps):
     model.step()
+
+model_df = model.data_collector.get_model_vars_dataframe()
+ranking_df = _convert_to_ranking_data_frame(model_df)
+print(ranking_df.head(10))
 
 agent_df = model.data_collector.get_agent_vars_dataframe()
 
