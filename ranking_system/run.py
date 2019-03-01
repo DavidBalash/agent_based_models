@@ -7,19 +7,43 @@ from ranking_model import RankingModel
 
 
 def _convert_to_ranking_data_frame(input_data_frame):
-    data_frame = pd.DataFrame(columns=['period', 'element', 'position'])
+    """Convert a ranking model data frame to a ranked data frame."""
+    data_frame = pd.DataFrame(columns=['element', 'period', 'position'])
     for row in input_data_frame.iterrows():
         for agent in row[1]['Agent rank']:
             position = row[1]['Agent rank']
-            ranking = pd.DataFrame([[row[0], agent, position[agent]]],
-                                   columns=['period', 'element', 'position'])
+            ranking = pd.DataFrame([[agent, row[0], position[agent]]],
+                                   columns=['element', 'period', 'position'])
             data_frame = data_frame.append(ranking, ignore_index=True)
 
     data_frame.sort_values(['period', 'element'], inplace=True)
     return data_frame.reset_index(0, drop=True)
 
 
-number_of_steps = 200
+def _create_ranking_event_data_frame(ranking_data_frame):
+    """Create the ranking event data frame."""
+    event_data_frame = pd.DataFrame(columns=['difference', 'difference_memory',
+                                             'element1', 'element2', 'period',
+                                             'position1', 'position2'])
+    for row_a in ranking_data_frame.iterrows():
+        for row_b in ranking_data_frame.iterrows():
+            if row_a[1][1] != row_b[1][1] or (row_a[1][1] == row_b[1][1]
+                                              and row_a[1][0] == row_b[1][0]):
+                continue
+            event = pd.DataFrame([[row_b[1][2] - row_a[1][2], 0,
+                                   row_a[1][0], row_b[1][0], row_a[1][1],
+                                   row_a[1][2], row_b[1][2]]],
+                                 columns=['difference', 'difference_memory',
+                                          'element1', 'element2',
+                                          'period',
+                                          'position1', 'position2'])
+            event_data_frame = event_data_frame.append(event, ignore_index=True)
+    event_data_frame.sort_values(['element1', 'element2'],
+                                 inplace=True)
+    return event_data_frame.reset_index(0, drop=True)
+
+
+number_of_steps = 50
 number_of_agents = 5
 commodities = [Commodity('commodity-1', 0.6, 0.2),
                Commodity('commodity-2', 0.4, 0.1)]
@@ -29,8 +53,12 @@ for _ in range(number_of_steps):
     model.step()
 
 model_df = model.data_collector.get_model_vars_dataframe()
+
 ranking_df = _convert_to_ranking_data_frame(model_df)
-print(ranking_df.head(10))
+ranking_df.to_csv("./rank.csv", sep=";", index=False, header=True)
+
+event_df = _create_ranking_event_data_frame(ranking_df)
+event_df.to_csv("./event.csv", sep=",", index=False, header=True)
 
 agent_df = model.data_collector.get_agent_vars_dataframe()
 
