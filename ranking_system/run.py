@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from commodity import Commodity
 from matplotlib.ticker import FuncFormatter
+from ranking_dynamics_volatility import RankingDynamicsVolatility
 from ranking_model import RankingModel
 
 
@@ -43,7 +44,7 @@ def _create_ranking_event_data_frame(ranking_data_frame):
     return event_data_frame.reset_index(0, drop=True)
 
 
-number_of_steps = 50
+number_of_steps = 5
 number_of_agents = 5
 commodities = [Commodity('commodity-1', 0.6, 0.2),
                Commodity('commodity-2', 0.4, 0.1)]
@@ -52,13 +53,15 @@ model = RankingModel(number_of_agents, commodities)
 for _ in range(number_of_steps):
     model.step()
 
-model_df = model.data_collector.get_model_vars_dataframe()
+model_df = model.data_collector.get_table_dataframe("Agent rank")
+print(model_df.head(5))
 
-ranking_df = _convert_to_ranking_data_frame(model_df)
-ranking_df.to_csv("./rank.csv", sep=";", index=False, header=True)
+ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
+# ranking_df = _convert_to_ranking_data_frame(model_df)
+# ranking_df.to_csv("./rank.csv", sep=";", index=False, header=True)
 
-event_df = _create_ranking_event_data_frame(ranking_df)
-event_df.to_csv("./event.csv", sep=",", index=False, header=True)
+# event_df = _create_ranking_event_data_frame(ranking_df)
+# event_df.to_csv("./event.csv", sep=",", index=False, header=True)
 
 agent_df = model.data_collector.get_agent_vars_dataframe()
 

@@ -1,4 +1,5 @@
 """The ranking model class file."""
+import pandas as pd
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
@@ -16,7 +17,6 @@ class RankingModel(Model):
         """
         super().__init__()
         self._agents = []
-        self.agent_rank = {}
         self.commodities = commodities
 
         # The RandomActivation scheduler activates all the agents once per
@@ -33,7 +33,7 @@ class RankingModel(Model):
         # Setup a data collector
         self.data_collector = DataCollector(
             # A model attribute
-            model_reporters={"Agent rank": "agent_rank"},
+            tables={"Agent rank": ["element", "period", "position", "score"]},
             # An agent attribute
             agent_reporters={"Score": "score", "Unique ID": "unique_id"})
 
@@ -50,10 +50,17 @@ class RankingModel(Model):
 
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
-        agent_scores = {}
+        agent_scores = []
         for agent in self._agents:
-            agent_scores[agent.unique_id] = agent.score
+            agent_scores.append([agent.unique_id,
+                                 self.schedule.time,
+                                 agent.score])
 
-        self.agent_rank = {key: rank for rank, key in
-                           enumerate(sorted(agent_scores, key=agent_scores.get,
-                                            reverse=True), 1)}
+        agent_rank = pd.DataFrame(agent_scores,
+                                  columns=['element', 'period', 'score'])
+
+        # Use pandas data frame to rank the agents.
+        agent_rank['position'] = agent_rank['score'].rank(ascending=False)
+
+        for row in agent_rank.to_dict('records'):
+            self.data_collector.add_table_row("Agent rank", row)
