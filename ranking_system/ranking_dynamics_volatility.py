@@ -7,6 +7,7 @@ Journal of Informetrics. 12. 567-578. 10.1016/j.joi.2018.04.005.
 
 """
 import pandas as pd
+from pandas.util.testing import assert_frame_equal
 import unittest
 
 
@@ -95,9 +96,9 @@ class RankingDynamicsVolatility:
                                          (event_data_frame.element2
                                          == tied.element2) &
                                          (event_data_frame.period
-                                         == previous_period),
+                                         == tied.period),
                                          'difference_memory']\
-                        = previous.difference
+                        = previous.difference.values[0]
                     break
                 else:
                     continue
@@ -124,10 +125,16 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def test_init(self):
         ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
-        print(ranking_dynamics_volatility.elements)
-        print(ranking_dynamics_volatility.periods)
+        periods = [1, 2, 3, 4]
+        self.assertEqual(ranking_dynamics_volatility.periods, periods,
+                         'Periods not correct.')
+        elements = {'s': [1, 2, 3, 4], 't': [1], 'u': [1, 2, 3, 4], 'v': [1],
+                    'w': [2, 3], 'x': [2], 'y': [3, 4], 'z': [4]}
+        self.assertEqual(ranking_dynamics_volatility.elements, elements,
+                         'Elements not correct')
 
     def test_create_events(self):
         ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
         ranking_dynamics_volatility._create_events()
-        print(ranking_dynamics_volatility._events)
+        events = pd.read_csv("./unit_test_data/events.csv", index_col=False)
+        assert_frame_equal(ranking_dynamics_volatility._events, events)
