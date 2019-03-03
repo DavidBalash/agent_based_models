@@ -45,16 +45,24 @@ class RankingDynamicsVolatility:
     def _create_events(self):
         """Create the ranking event data frame."""
         events = []
-        for _, row_a in self.ranking.iterrows():
-            for _, row_b in self.ranking.iterrows():
-                if (row_a.period != row_b.period
-                    or (row_a.period == row_b.period
-                        and row_a.element == row_b.element)):
+        for element1 in sorted(self.elements):
+            for element2 in sorted(self.elements):
+                if element1 == element2:
                     continue
-                events.append([row_b.position - row_a.position, 0,
-                               row_a.element, row_b.element,
-                               row_a.period, row_a.position,
-                               row_b.position])
+                for period in self.periods:
+                    if (period not in self.elements[element1]
+                            or period not in self.elements[element2]):
+                        continue
+                    ranking1 = self.ranking[(self.ranking.element == element1)
+                                            & (self.ranking.period == period)]
+                    ranking2 = self.ranking[(self.ranking.element == element2)
+                                            & (self.ranking.period == period)]
+                    events.append([ranking2.position.item()
+                                   - ranking1.position.item(), 0,
+                                   ranking1.element.item(),
+                                   ranking2.element.item(),
+                                   period, ranking1.position.item(),
+                                   ranking2.position.item()])
 
         event_data_frame = pd.DataFrame(events,
                                         columns=['difference',
@@ -82,23 +90,23 @@ class RankingDynamicsVolatility:
 
                 # Get the previous row from the event data frame.
                 previous = event_data_frame[(event_data_frame.element1
-                                            == tied.element1) &
-                                            (event_data_frame.element2
-                                            == tied.element2) &
-                                            (event_data_frame.period
+                                            == tied.element1)
+                                            & (event_data_frame.element2
+                                            == tied.element2)
+                                            & (event_data_frame.period
                                             == previous_period)]
 
                 # If the previous difference is not zero then update the
                 # difference memory in the event data frame, otherwise continue.
-                if previous.difference.values[0] != 0:
+                if previous.difference.item() != 0:
                     event_data_frame.loc[(event_data_frame.element1
-                                         == tied.element1) &
-                                         (event_data_frame.element2
-                                         == tied.element2) &
-                                         (event_data_frame.period
+                                         == tied.element1)
+                                         & (event_data_frame.element2
+                                         == tied.element2)
+                                         & (event_data_frame.period
                                          == tied.period),
                                          'difference_memory']\
-                        = previous.difference.values[0]
+                        = previous.difference.item()
                     break
                 else:
                     continue
@@ -147,31 +155,31 @@ class RankingDynamicsVolatility:
         # then we compare the relative position of the element1 and element2
         # between two consecutive periods. If the difference changes to a
         # positive difference or to a negative difference then return 1.
-        if ((event_period_1.difference.values[0] > 0
-             and event_period_2.difference.values[0] < 0)
-                or (event_period_1.difference.values[0] < 0
-                    and event_period_2.difference.values[0] > 0)):
+        if ((event_period_1.difference.item() > 0
+             and event_period_2.difference.item() < 0)
+                or (event_period_1.difference.item() < 0
+                    and event_period_2.difference.item() > 0)):
             return 1
 
         # If the two elements were tied and are not tied anymore then the last
         # time they were not tied determines if there is a position change.
 
         # Check ties on period1 -> Use memory
-        if ((event_period_1.difference.values[0] == 0
-             and event_period_1.difference_memory.values[0] > 0
-             and event_period_2.difference.values[0] < 0)
-                or (event_period_1.difference.values[0] == 0
-                    and event_period_1.difference_memory.values[0] < 0
-                    and event_period_2.difference.values[0] > 0)):
+        if ((event_period_1.difference.item() == 0
+             and event_period_1.difference_memory.item() > 0
+             and event_period_2.difference.item() < 0)
+                or (event_period_1.difference.item() == 0
+                    and event_period_1.difference_memory.item() < 0
+                    and event_period_2.difference.item() > 0)):
             return 1
 
         # Check ties on period2 -> Use memory
-        if ((event_period_2.difference.values[0] == 0
-             and event_period_2.difference_memory.values[0] > 0
-             and event_period_1.difference.values[0] < 0)
-                or (event_period_2.difference.values[0] == 0
-                    and event_period_2.difference_memory.values[0] < 0
-                    and event_period_1.difference.values[0] > 0)):
+        if ((event_period_2.difference.item() == 0
+             and event_period_2.difference_memory.item() > 0
+             and event_period_1.difference.item() < 0)
+                or (event_period_2.difference.item() == 0
+                    and event_period_2.difference_memory.item() < 0
+                    and event_period_1.difference.item() > 0)):
             return 1
 
         # Otherwise return 0
