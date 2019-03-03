@@ -209,6 +209,3 @@ dmypy.json
 .venv/
 
 # End of https://www.gitignore.io/api/python,pycharm,jupyternotebook
-
-# Unit test data
-**/unit_test_data

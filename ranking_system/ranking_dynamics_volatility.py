@@ -105,6 +105,78 @@ class RankingDynamicsVolatility:
 
         self._events = event_data_frame.reset_index(0, drop=True)
 
+    def _calculate_position_shift(self, element1, element2, period1, period2):
+        """If there is a position shift between element1 and element2
+        in period1 and period2 then return 1 otherwise return 0.
+
+        :param element1: First element to check for a position shift.
+        :param element2: Second element to check for a position shift.
+        :param period1: First period in which to check for the shift.
+        :param period2: Second period in which to check for the shift.
+        :return: Return 1 if there is a position shift, else return 0.
+        """
+
+        # When the state of one of the two elements changes from active
+        # to inactive or from inactive to active return 1.
+
+        # element1 was active and became inactive or
+        # element1 was inactive and became active
+        if ((period1 in self.elements[element1]
+             and period2 not in self.elements[element1])
+                or (period1 not in self.elements[element1]
+                    and period2 in self.elements[element1])):
+            return 1
+
+        # element2 was active and became inactive or
+        # element2 was inactive and became active
+        if ((period1 in self.elements[element2]
+             and period2 not in self.elements[element2])
+                or (period1 not in self.elements[element2]
+                    and period2 in self.elements[element2])):
+            return 1
+
+        # Get the event row from the events data frame that matches the period.
+        event_period_1 = self._events[(self._events.element1 == element1)
+                                      & (self._events.element2 == element2)
+                                      & (self._events.period == period1)]
+        event_period_2 = self._events[(self._events.element1 == element1)
+                                      & (self._events.element2 == element2)
+                                      & (self._events.period == period2)]
+
+        # If both elements do not change state between active or inactive,
+        # then we compare the relative position of the element1 and element2
+        # between two consecutive periods. If the difference changes to a
+        # positive difference or to a negative difference then return 1.
+        if ((event_period_1.difference.values[0] > 0
+             and event_period_2.difference.values[0] < 0)
+                or (event_period_1.difference.values[0] < 0
+                    and event_period_2.difference.values[0] > 0)):
+            return 1
+
+        # If the two elements were tied and are not tied anymore then the last
+        # time they were not tied determines if there is a position change.
+
+        # Check ties on period1 -> Use memory
+        if ((event_period_1.difference.values[0] == 0
+             and event_period_1.difference_memory.values[0] > 0
+             and event_period_2.difference.values[0] < 0)
+                or (event_period_1.difference.values[0] == 0
+                    and event_period_1.difference_memory.values[0] < 0
+                    and event_period_2.difference.values[0] > 0)):
+            return 1
+
+        # Check ties on period2 -> Use memory
+        if ((event_period_2.difference.values[0] == 0
+             and event_period_2.difference_memory.values[0] > 0
+             and event_period_1.difference.values[0] < 0)
+                or (event_period_2.difference.values[0] == 0
+                    and event_period_2.difference_memory.values[0] < 0
+                    and event_period_1.difference.values[0] > 0)):
+            return 1
+
+        # Otherwise return 0
+        return 0
+
 
 class TestRankingDynamicsVolatility(unittest.TestCase):
     """ Unit test class for ranking dynamics volatility functions."""
@@ -138,3 +210,32 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
         ranking_dynamics_volatility._create_events()
         events = pd.read_csv("./unit_test_data/events.csv", index_col=False)
         assert_frame_equal(ranking_dynamics_volatility._events, events)
+
+    def test_calculate_position_shift(self):
+        ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
+        ranking_dynamics_volatility._create_events()
+
+        # element1 becomes inactive
+        shift = ranking_dynamics_volatility._calculate_position_shift('t', 'u',
+                                                                      1, 2)
+        self.assertEqual(shift, 1, "Shift result not correct.")
+
+        # element2 becomes inactive
+        shift = ranking_dynamics_volatility._calculate_position_shift('s', 't',
+                                                                      1, 2)
+        self.assertEqual(shift, 1, "Shift result not correct.")
+
+        # Shift from a negative difference to a positive difference.
+        shift = ranking_dynamics_volatility._calculate_position_shift('u', 'y',
+                                                                      3, 4)
+        self.assertEqual(shift, 1, "Shift result not correct.")
+
+        # Tied on period1 not tied on period2.
+        shift = ranking_dynamics_volatility._calculate_position_shift('s', 'u',
+                                                                      3, 4)
+        self.assertEqual(shift, 1, "Shift result not correct.")
+
+        # No shift
+        shift = ranking_dynamics_volatility._calculate_position_shift('s', 'u',
+                                                                      2, 3)
+        self.assertEqual(shift, 0, "Shift result not correct.")
