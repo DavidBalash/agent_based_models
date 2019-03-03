@@ -44,7 +44,7 @@ class RankingDynamicsVolatility:
 
     def _create_events(self):
         """Create the ranking event data frame."""
-        events = []
+        events_list = []
         for element1 in sorted(self.elements):
             for element2 in sorted(self.elements):
                 if element1 == element2:
@@ -57,24 +57,22 @@ class RankingDynamicsVolatility:
                                             & (self.ranking.period == period)]
                     ranking2 = self.ranking[(self.ranking.element == element2)
                                             & (self.ranking.period == period)]
-                    events.append([ranking2.position.item()
-                                   - ranking1.position.item(), 0,
-                                   ranking1.element.item(),
-                                   ranking2.element.item(),
-                                   period, ranking1.position.item(),
-                                   ranking2.position.item()])
+                    events_list.append([ranking2.position.item()
+                                       - ranking1.position.item(), 0,
+                                       ranking1.element.item(),
+                                       ranking2.element.item(),
+                                       period, ranking1.position.item(),
+                                       ranking2.position.item()])
 
-        event_data_frame = pd.DataFrame(events,
-                                        columns=['difference',
-                                                 'difference_memory',
-                                                 'element1', 'element2',
-                                                 'period', 'position1',
-                                                 'position2'])
-        event_data_frame.sort_values(['element1', 'element2'],
-                                     inplace=True)
+        events = pd.DataFrame(events_list, columns=['difference',
+                                                    'difference_memory',
+                                                    'element1', 'element2',
+                                                    'period', 'position1',
+                                                    'position2'])
+        events.sort_values(['element1', 'element2'], inplace=True)
 
         # Find the tied events in the event data frame..
-        tied_events = event_data_frame[event_data_frame.difference == 0]
+        tied_events = events[events.difference == 0]
 
         # For each of the tied events update the difference memory.
         for _, tied in tied_events.iterrows():
@@ -84,34 +82,25 @@ class RankingDynamicsVolatility:
                 previous_period = self.periods[period_index]
 
                 # If the elements are not active, break out of the while loop.
-                if (previous_period not in self.elements[tied.element1] or
-                        previous_period not in self.elements[tied.element2]):
+                if (previous_period not in self.elements[tied.element1]
+                        or previous_period not in self.elements[tied.element2]):
                     break
 
                 # Get the previous row from the event data frame.
-                previous = event_data_frame[(event_data_frame.element1
-                                            == tied.element1)
-                                            & (event_data_frame.element2
-                                            == tied.element2)
-                                            & (event_data_frame.period
-                                            == previous_period)]
+                previous = events[(events.element1 == tied.element1)
+                                  & (events.element2 == tied.element2)
+                                  & (events.period == previous_period)]
 
                 # If the previous difference is not zero then update the
-                # difference memory in the event data frame, otherwise continue.
+                # difference memory in the event data frame.
                 if previous.difference.item() != 0:
-                    event_data_frame.loc[(event_data_frame.element1
-                                         == tied.element1)
-                                         & (event_data_frame.element2
-                                         == tied.element2)
-                                         & (event_data_frame.period
-                                         == tied.period),
-                                         'difference_memory']\
-                        = previous.difference.item()
+                    events.loc[(events.element1 == tied.element1)
+                               & (events.element2 == tied.element2)
+                               & (events.period == tied.period),
+                               'difference_memory'] = previous.difference.item()
                     break
-                else:
-                    continue
 
-        self._events = event_data_frame.reset_index(0, drop=True)
+        self._events = events.reset_index(0, drop=True)
 
     def _calculate_position_shift(self, element1, element2, period1, period2):
         """If there is a position shift between element1 and element2
@@ -204,46 +193,41 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                                     columns=['element', 'period', 'position'])
 
     def test_init(self):
-        ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
+        volatility = RankingDynamicsVolatility(self.ranking)
         periods = [1, 2, 3, 4]
-        self.assertEqual(ranking_dynamics_volatility.periods, periods,
+        self.assertEqual(volatility.periods, periods,
                          'Periods not correct.')
         elements = {'s': [1, 2, 3, 4], 't': [1], 'u': [1, 2, 3, 4], 'v': [1],
                     'w': [2, 3], 'x': [2], 'y': [3, 4], 'z': [4]}
-        self.assertEqual(ranking_dynamics_volatility.elements, elements,
+        self.assertEqual(volatility.elements, elements,
                          'Elements not correct')
 
     def test_create_events(self):
-        ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
-        ranking_dynamics_volatility._create_events()
+        volatility = RankingDynamicsVolatility(self.ranking)
+        volatility._create_events()
         events = pd.read_csv("./unit_test_data/events.csv", index_col=False)
-        assert_frame_equal(ranking_dynamics_volatility._events, events)
+        assert_frame_equal(volatility._events, events)
 
     def test_calculate_position_shift(self):
-        ranking_dynamics_volatility = RankingDynamicsVolatility(self.ranking)
-        ranking_dynamics_volatility._create_events()
+        volatility = RankingDynamicsVolatility(self.ranking)
+        volatility._create_events()
 
         # element1 becomes inactive
-        shift = ranking_dynamics_volatility._calculate_position_shift('t', 'u',
-                                                                      1, 2)
+        shift = volatility._calculate_position_shift('t', 'u', 1, 2)
         self.assertEqual(shift, 1, "Shift result not correct.")
 
         # element2 becomes inactive
-        shift = ranking_dynamics_volatility._calculate_position_shift('s', 't',
-                                                                      1, 2)
+        shift = volatility._calculate_position_shift('s', 't', 1, 2)
         self.assertEqual(shift, 1, "Shift result not correct.")
 
         # Shift from a negative difference to a positive difference.
-        shift = ranking_dynamics_volatility._calculate_position_shift('u', 'y',
-                                                                      3, 4)
+        shift = volatility._calculate_position_shift('u', 'y', 3, 4)
         self.assertEqual(shift, 1, "Shift result not correct.")
 
         # Tied on period1 not tied on period2.
-        shift = ranking_dynamics_volatility._calculate_position_shift('s', 'u',
-                                                                      3, 4)
+        shift = volatility._calculate_position_shift('s', 'u', 3, 4)
         self.assertEqual(shift, 1, "Shift result not correct.")
 
         # No shift
-        shift = ranking_dynamics_volatility._calculate_position_shift('s', 'u',
-                                                                      2, 3)
+        shift = volatility._calculate_position_shift('s', 'u', 2, 3)
         self.assertEqual(shift, 0, "Shift result not correct.")
