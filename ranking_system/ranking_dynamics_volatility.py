@@ -1,18 +1,29 @@
 """ Ranking dynamics and volatility class.
 
-Based on the journal article:
+Based on the journal article: Ranking dynamics and volatility [1]
+
+References:
 [1] Garcia-Zorita, Carlos & Rousseau, Ronald & Marugan-Lazaro,
 Sergio & Casado, Elías. (2018). Ranking dynamics and volatility.
 Journal of Informetrics. 12. 567-578. 10.1016/j.joi.2018.04.005.
+
+[2] Marugan-Lazaro, Sergio. (2018). Ranking dynamics and volatility.
+GitHub repository, https://github.com/smarugan/uc3m_dynamics
 
 """
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import unittest
 
+__author__ = "David Balash"
+__copyright__ = "Copyright 2019, Agent Based Models"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__status__ = "Prototype"
+
 
 class RankingDynamicsVolatility:
-    """Class used calculate ranking volatility."""
+    """Class used to calculate ranking volatility."""
 
     def __init__(self, ranking):
         """The constructor for the RankingDynamicsVolatility class.
@@ -231,3 +242,19 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
         # No shift
         shift = volatility._calculate_position_shift('s', 'u', 2, 3)
         self.assertEqual(shift, 0, "Shift result not correct.")
+
+# Agent based models
+# Copyright (C) 2019 David Balash
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
