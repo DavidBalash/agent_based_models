@@ -1,8 +1,8 @@
 """ Unit test for Ranking dynamics and volatility class."""
+import unittest
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 from ranking_dynamics_volatility import RankingDynamicsVolatility
-import unittest
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -11,10 +11,12 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
+# pylint: disable=protected-access
 class TestRankingDynamicsVolatility(unittest.TestCase):
     """ Unit test class for ranking dynamics volatility functions."""
 
     def setUp(self):
+        """Unit test setup method."""
         # S = {s, t, u, v, w, x, y, z}
         # c1 = (s, t, u, v; [w, x, y, z])
         # c2 = (s, u, w, x; [t, v, y, z])
@@ -29,6 +31,7 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                                      columns=['element', 'period', 'position'])
 
     def test_init(self):
+        """Test the init for the RankingDynamicsVolatility class."""
         volatility = RankingDynamicsVolatility(self._ranking)
         periods = [1, 2, 3, 4]
         self.assertEqual(volatility._periods, periods,
@@ -39,11 +42,13 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                          'Elements not correct')
 
     def test_create_events(self):
+        """Test the create events function."""
         volatility = RankingDynamicsVolatility(self._ranking)
-        events = pd.read_csv('./data/events.csv', index_col=False)
+        events = pd.read_csv('./unit_test_data/events.csv', index_col=False)
         assert_frame_equal(volatility._events, events)
 
     def test_calculate_position_shift(self):
+        """Test the calculate position shift function."""
         volatility = RankingDynamicsVolatility(self._ranking)
 
         # element1 becomes inactive
@@ -72,13 +77,28 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                          'Position shift result not correct.')
 
     def test_calculate_volatility(self):
+        """Test the calculate volatility function."""
         volatility = RankingDynamicsVolatility(self._ranking)
         total_results = volatility.get_results()
-        partial_results = pd.read_csv('./data/partial_results.csv',
+        partial_results = pd.read_csv('./unit_test_data/partial_results.csv',
                                       index_col=False)
-        results = pd.read_csv('./data/results.csv', index_col=False)
+        results = pd.read_csv('./unit_test_data/results.csv', index_col=False)
         assert_frame_equal(volatility._partial_results, partial_results)
         assert_frame_equal(total_results, results)
+        total_volatility = 0
+        for _, row in total_results.iterrows():
+            total_volatility += row.position_shifts
+        number_of_comparisons = (len(volatility._elements)
+                                 * (len(volatility._elements) - 1)
+                                 * (len(volatility._periods) - 1))
+        normalized_mean_strength = total_volatility / number_of_comparisons
+        self.assertEqual(number_of_comparisons, 168,
+                         'Number of comparisons not correct.')
+        self.assertEqual(total_volatility, 102,
+                         'Total volatility not correct.')
+        self.assertEqual(volatility.get_normalized_mean_strength(),
+                         normalized_mean_strength,
+                         'Normalized mean strength not correct.')
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 """Ranking agent class file."""
+import copy
 from mesa import Agent
 from numpy import random
-import copy
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"

@@ -1,6 +1,6 @@
 """Unit test for the Commodity class."""
-from commodity import Commodity
 import unittest
+from commodity import Commodity
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
