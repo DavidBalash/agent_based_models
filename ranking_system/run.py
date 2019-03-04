@@ -6,6 +6,12 @@ from matplotlib.ticker import FuncFormatter
 from ranking_dynamics_volatility import RankingDynamicsVolatility
 from ranking_model import RankingModel
 
+__author__ = "David Balash"
+__copyright__ = "Copyright 2019, Agent Based Models"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__status__ = "Prototype"
+
 
 def _convert_to_ranking_data_frame(input_data_frame):
     """Convert a ranking model data frame to a ranked data frame."""
@@ -19,29 +25,6 @@ def _convert_to_ranking_data_frame(input_data_frame):
 
     data_frame.sort_values(['period', 'element'], inplace=True)
     return data_frame.reset_index(0, drop=True)
-
-
-def _create_ranking_event_data_frame(ranking_data_frame):
-    """Create the ranking event data frame."""
-    event_data_frame = pd.DataFrame(columns=['difference', 'difference_memory',
-                                             'element1', 'element2', 'period',
-                                             'position1', 'position2'])
-    for row_a in ranking_data_frame.iterrows():
-        for row_b in ranking_data_frame.iterrows():
-            if row_a[1][1] != row_b[1][1] or (row_a[1][1] == row_b[1][1]
-                                              and row_a[1][0] == row_b[1][0]):
-                continue
-            event = pd.DataFrame([[row_b[1][2] - row_a[1][2], 0,
-                                   row_a[1][0], row_b[1][0], row_a[1][1],
-                                   row_a[1][2], row_b[1][2]]],
-                                 columns=['difference', 'difference_memory',
-                                          'element1', 'element2',
-                                          'period',
-                                          'position1', 'position2'])
-            event_data_frame = event_data_frame.append(event, ignore_index=True)
-    event_data_frame.sort_values(['element1', 'element2'],
-                                 inplace=True)
-    return event_data_frame.reset_index(0, drop=True)
 
 
 number_of_steps = 5
@@ -102,3 +85,19 @@ def format_fn(tick_val, _):
 ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
 
 plt.show()
+
+# Agent based models
+# Copyright (C) 2019 David Balash
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.

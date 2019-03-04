@@ -12,8 +12,6 @@ GitHub repository, https://github.com/smarugan/uc3m_dynamics
 
 """
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
-import unittest
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -239,76 +237,6 @@ class RankingDynamicsVolatility:
 
     def get_results(self):
         return self._total_results
-
-
-class TestRankingDynamicsVolatility(unittest.TestCase):
-    """ Unit test class for ranking dynamics volatility functions."""
-
-    def setUp(self):
-        # S = {s, t, u, v, w, x, y, z}
-        # c1 = (s, t, u, v; [w, x, y, z])
-        # c2 = (s, u, w, x; [t, v, y, z])
-        # c3 = ([s, u], w, y; [t, v, x, z])
-        # c4 = (z, y, u, s; [t, v, w, x])
-        # element, period, position
-        rank = [['s', 1, 1], ['t', 1, 2], ['u', 1, 3], ['v', 1, 4],
-                ['s', 2, 1], ['u', 2, 2], ['w', 2, 3], ['x', 2, 4],
-                ['s', 3, 1], ['u', 3, 1], ['w', 3, 3], ['y', 3, 4],
-                ['z', 4, 1], ['y', 4, 2], ['u', 4, 3], ['s', 4, 4]]
-        self._ranking = pd.DataFrame(rank,
-                                     columns=['element', 'period', 'position'])
-
-    def test_init(self):
-        volatility = RankingDynamicsVolatility(self._ranking)
-        periods = [1, 2, 3, 4]
-        self.assertEqual(volatility._periods, periods,
-                         'Periods not correct.')
-        elements = {'s': [1, 2, 3, 4], 't': [1], 'u': [1, 2, 3, 4], 'v': [1],
-                    'w': [2, 3], 'x': [2], 'y': [3, 4], 'z': [4]}
-        self.assertEqual(volatility._elements, elements,
-                         'Elements not correct')
-
-    def test_create_events(self):
-        volatility = RankingDynamicsVolatility(self._ranking)
-        events = pd.read_csv('./unit_test_data/events.csv', index_col=False)
-        assert_frame_equal(volatility._events, events)
-
-    def test_calculate_position_shift(self):
-        volatility = RankingDynamicsVolatility(self._ranking)
-
-        # element1 becomes inactive
-        position_shift = volatility._calculate_position_shift('t', 'u', 1, 2)
-        self.assertEqual(position_shift, 1,
-                         'Position shift result not correct.')
-
-        # element2 becomes inactive
-        position_shift = volatility._calculate_position_shift('s', 't', 1, 2)
-        self.assertEqual(position_shift, 1,
-                         'Position shift result not correct.')
-
-        # Shift from a negative difference to a positive difference.
-        position_shift = volatility._calculate_position_shift('u', 'y', 3, 4)
-        self.assertEqual(position_shift, 1,
-                         'Position shift result not correct.')
-
-        # Tied on period1 not tied on period2.
-        position_shift = volatility._calculate_position_shift('s', 'u', 3, 4)
-        self.assertEqual(position_shift, 1,
-                         'Position shift result not correct.')
-
-        # No position shift
-        position_shift = volatility._calculate_position_shift('s', 'u', 2, 3)
-        self.assertEqual(position_shift, 0,
-                         'Position shift result not correct.')
-
-    def test_calculate_volatility(self):
-        volatility = RankingDynamicsVolatility(self._ranking)
-        total_results = volatility.get_results()
-        partial_results = pd.read_csv('./unit_test_data/partial_results.csv',
-                                      index_col=False)
-        results = pd.read_csv('./unit_test_data/results.csv', index_col=False)
-        assert_frame_equal(volatility._partial_results, partial_results)
-        assert_frame_equal(total_results, results)
 
 # Agent based models
 # Copyright (C) 2019 David Balash
