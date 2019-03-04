@@ -93,9 +93,8 @@ class RankingDynamicsVolatility:
 
         # For each of the tied events update the difference memory.
         for _, tied in tied_events.iterrows():
-            period_index = self._periods.index(tied.period)
-            while period_index > 0:
-                period_index -= 1
+            tied_index = self._periods.index(tied.period)
+            for period_index in reversed(range(1, tied_index)):
                 prev_period = self._periods[period_index]
 
                 # If the elements are not active, break out of the while loop.
@@ -304,9 +303,11 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def test_calculate_volatility(self):
         volatility = RankingDynamicsVolatility(self._ranking)
-        results = pd.read_csv('./unit_test_data/results.csv', index_col=False)
         total_results = volatility.get_results()
-        print(total_results)
+        partial_results = pd.read_csv('./unit_test_data/partial_results.csv',
+                                      index_col=False)
+        results = pd.read_csv('./unit_test_data/results.csv', index_col=False)
+        assert_frame_equal(volatility._partial_results, partial_results)
         assert_frame_equal(total_results, results)
 
 # Agent based models
