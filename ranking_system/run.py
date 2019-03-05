@@ -27,24 +27,44 @@ def _convert_to_ranking_data_frame(input_data_frame):
     return data_frame.reset_index(0, drop=True)
 
 
-number_of_steps = 5
-number_of_agents = 5
+number_of_steps = 10
+number_of_agents = 8
 commodities = [Commodity('commodity-1', 0.6, 0.2),
                Commodity('commodity-2', 0.4, 0.1)]
 
+
 model = RankingModel(number_of_agents, commodities)
-for _ in range(number_of_steps):
+normalized_mean_strengths = []
+for step in range(number_of_steps + 1):
     model.step()
+    if step > 0:
+        model_df = model.data_collector.get_table_dataframe('Agent rank')
+        ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
+        normalized_mean_strengths.append(ranking_dynamics_volatility
+                                         .get_normalized_mean_strength())
+    else:
+        normalized_mean_strengths.append(None)
 
-model_df = model.data_collector.get_table_dataframe("Agent rank")
-print(model_df.head(5))
-
-ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
+# results = ranking_dynamics_volatility.get_results()
+# results.to_csv('results.csv', index=False, header=True)
 # ranking_df = _convert_to_ranking_data_frame(model_df)
 # ranking_df.to_csv("./rank.csv", sep=";", index=False, header=True)
 
 # event_df = _create_ranking_event_data_frame(ranking_df)
 # event_df.to_csv("./event.csv", sep=",", index=False, header=True)
+
+fig1, ax1 = plt.subplots()
+ax1.plot(normalized_mean_strengths)
+ax1.plot(normalized_mean_strengths, 's', fillstyle='full', color='w',
+         markeredgecolor='grey')
+ax1.set(xlabel='time', ylabel='normalized mean strength (NS)',
+        title='Volatility')
+ax1.grid(False)  # (axis='y', linestyle='--')
+plt.xlim(1, number_of_steps)
+# plt.ylim(0, 1)
+# Set the plot tick parameters so that the ticks are facing inward and on both
+# the top and the bottom of the plot.
+plt.tick_params(direction='in', top=True, right=True)
 
 agent_df = model.data_collector.get_agent_vars_dataframe()
 
@@ -55,15 +75,12 @@ for label, df in agent_df.groupby('Unique ID'):
     legend_labels.append(label)
     df.plot(ax=ax)
 
-ax.legend(labels=legend_labels, fontsize="small")
-plt.title('Agent score over time')
-plt.xlabel('time')
-plt.ylabel('score')
+ax.legend(labels=legend_labels, fontsize='small')
+ax.set(xlabel='time', ylabel='score', title='Agent score over time')
+ax.grid(False)
+
 plt.xlim(0, number_of_steps)
 plt.ylim(0,)
-
-# Don't show the plot grid.
-plt.grid(False)
 
 # Set the plot tick parameters so that the ticks are facing inward and on both
 # the top and the bottom of the plot.
