@@ -35,6 +35,13 @@ commodities = [Commodity('commodity-1', 0.6, 0.2),
 
 model = RankingModel(number_of_agents, commodities)
 normalized_mean_strengths = []
+volatility_by_agent = {}
+
+# Setup volatility by agent dictionary by adding an empty list for each agent
+for agent in range(number_of_agents):
+    volatility_by_agent['agent-{}'.format(agent)] = [None]
+
+# Manually step though the number of steps
 for step in range(number_of_steps + 1):
     model.step()
     if step > 0:
@@ -42,6 +49,9 @@ for step in range(number_of_steps + 1):
         ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
         normalized_mean_strengths.append(ranking_dynamics_volatility
                                          .get_normalized_mean_strength())
+        total_results = ranking_dynamics_volatility.get_results()
+        for _, row in total_results.iterrows():
+            volatility_by_agent[row.element].append(row.volatility)
     else:
         normalized_mean_strengths.append(None)
 
@@ -58,12 +68,25 @@ ax1.plot(normalized_mean_strengths)
 ax1.plot(normalized_mean_strengths, 's', fillstyle='full', color='w',
          markeredgecolor='grey')
 ax1.set(xlabel='time', ylabel='normalized mean strength (NS)',
-        title='Volatility')
+        title='Volatility over time')
 ax1.grid(False)  # (axis='y', linestyle='--')
 plt.xlim(1, number_of_steps)
-# plt.ylim(0, 1)
+plt.ylim(0,)
 # Set the plot tick parameters so that the ticks are facing inward and on both
 # the top and the bottom of the plot.
+plt.tick_params(direction='in', top=True, right=True)
+
+legend_labels = []
+fig2, ax2 = plt.subplots()
+for agent, volatility in volatility_by_agent.items():
+    legend_labels.append(agent)
+    ax2.plot(volatility, label=agent)
+
+ax2.set(xlabel='time', ylabel='relative volatility',
+        title='Agent volatility over time')
+ax2.legend(labels=legend_labels, fontsize='small')
+plt.xlim(1, number_of_steps)
+plt.ylim(0,)
 plt.tick_params(direction='in', top=True, right=True)
 
 agent_df = model.data_collector.get_agent_vars_dataframe()
