@@ -100,6 +100,15 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                          normalized_mean_strength,
                          'Normalized mean strength not correct.')
 
+    def test_results(self):
+        """Test the volatility results."""
+        ranking = pd.read_csv('./unit_test_data/ranking.csv', index_col=False)
+        volatility = RankingDynamicsVolatility(ranking)
+        results = volatility.get_results()
+        total_results = pd.read_csv('./unit_test_data/total_results.csv',
+                                    index_col=False)
+        assert_frame_equal(results, total_results)
+
 
 if __name__ == '__main__':
     unittest.main()

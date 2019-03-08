@@ -1,6 +1,5 @@
 """Run the ranking model."""
 import matplotlib.pyplot as plt
-import pandas as pd
 from commodity import Commodity
 from matplotlib.ticker import FuncFormatter
 from ranking_dynamics_volatility import RankingDynamicsVolatility
@@ -11,20 +10,6 @@ __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
-
-
-def _convert_to_ranking_data_frame(input_data_frame):
-    """Convert a ranking model data frame to a ranked data frame."""
-    data_frame = pd.DataFrame(columns=['element', 'period', 'position'])
-    for row in input_data_frame.iterrows():
-        for agent in row[1]['Agent rank']:
-            position = row[1]['Agent rank']
-            ranking = pd.DataFrame([[agent, row[0], position[agent]]],
-                                   columns=['element', 'period', 'position'])
-            data_frame = data_frame.append(ranking, ignore_index=True)
-
-    data_frame.sort_values(['period', 'element'], inplace=True)
-    return data_frame.reset_index(0, drop=True)
 
 
 number_of_steps = 10
@@ -55,13 +40,6 @@ for step in range(number_of_steps + 1):
     else:
         normalized_mean_strengths.append(None)
 
-# results = ranking_dynamics_volatility.get_results()
-# results.to_csv('results.csv', index=False, header=True)
-# ranking_df = _convert_to_ranking_data_frame(model_df)
-# ranking_df.to_csv("./rank.csv", sep=";", index=False, header=True)
-
-# event_df = _create_ranking_event_data_frame(ranking_df)
-# event_df.to_csv("./event.csv", sep=",", index=False, header=True)
 
 fig1, ax1 = plt.subplots()
 ax1.plot(normalized_mean_strengths)
