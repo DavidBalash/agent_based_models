@@ -1,9 +1,6 @@
 """Run the ranking model."""
-import plot_utils
 import matplotlib.pyplot as plt
-from good import Good
-from ranking_dynamics_volatility import RankingDynamicsVolatility
-from ranking_model import RankingModel
+from ranking_system import *
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -14,9 +11,9 @@ __status__ = "Prototype"
 
 number_of_steps = 10
 number_of_agents = 5
-goods = [Good('good-1', 0.6), Good('good-2', 0.4)]
+attributes = [Attribute('attribute-1', 0.6), Attribute('attribute-2', 0.4)]
 
-model = RankingModel(number_of_agents, goods)
+model = RankingModel(number_of_agents, attributes)
 normalized_mean_strengths = []
 volatility_by_agent = {}
 
@@ -39,33 +36,20 @@ for step in range(number_of_steps + 1):
         normalized_mean_strengths.append(None)
 
 
-agent_vars_df = model.data_collector.get_agent_vars_dataframe()
-
-score_by_agent = {}
-# Setup volatility by agent dictionary by adding an empty list for each agent
-for agent, df in agent_vars_df.groupby('Unique ID'):
-    score_by_agent[agent] = []
-    for _, row in df.iterrows():
-        score_by_agent[agent].append(row.Score)
-
 # Plot the total volatility over time
-plot_utils.list_line_plot(plt, normalized_mean_strengths, 'time',
-                          'normalized mean strength (NS)',
-                          'Volatility over time', 1, number_of_steps)
+list_line_plot(plt, normalized_mean_strengths, 'time',
+               'normalized mean strength (NS)', 'Volatility over time', 1,
+               number_of_steps)
 
 
 # Plot the agent volatility over time
-plot_utils.dictionary_line_plot(plt, volatility_by_agent, 'time',
-                                'relative volatility',
-                                'Agent volatility over time', 1,
-                                number_of_steps)
+dictionary_line_plot(plt, volatility_by_agent, 'time', 'relative volatility',
+                     'Agent volatility over time', 1, number_of_steps)
 
 
 # Plot the agent score over time
-plot_utils.dictionary_line_plot(plt, score_by_agent, 'time',
-                                'score',
-                                'Agent score over time', 0,
-                                number_of_steps)
+dictionary_line_plot(plt, get_score_by_agent(model), 'time', 'score',
+                     'Agent score over time', 0, number_of_steps)
 
 plt.show()
 

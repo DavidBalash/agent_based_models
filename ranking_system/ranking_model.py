@@ -4,8 +4,10 @@ from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
 
-from ranking_agent import RankingAgent
+from .ranking_agent import RankingAgent
 
+__name__ = "ranking_model"
+__package__ = "ranking_system"
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
@@ -16,15 +18,16 @@ __status__ = "Prototype"
 class RankingModel(Model):
     """The ranking model class."""
 
-    def __init__(self, number_of_agents, goods):
+    def __init__(self, number_of_agents, attributes):
         """Constructor for the RankingModel class.
 
         :param number_of_agents: The number of agents.
-        :param goods: The list of goods.
+        :param attributes: The list of attributes.
         """
+
         super().__init__()
         self._agents = []
-        self.goods = goods
+        self.attributes = attributes
 
         # The RandomActivation scheduler activates all the agents once per
         # step, in random order.
@@ -44,9 +47,11 @@ class RankingModel(Model):
             # An agent attribute
             agent_reporters={"Score": "score", "Unique ID": "unique_id"})
 
+        # Collect data at time t = 0
+        self.data_collector.collect(self)
+
     def step(self):
         """Advance the model by one step."""
-        self.data_collector.collect(self)
 
         # When we call the schedule’s step method, it shuffles the order of the
         # agents, then activates them all, one at a time.
@@ -55,8 +60,12 @@ class RankingModel(Model):
         # Update the agent ranking
         self._update_ranking()
 
+        # Collect data.
+        self.data_collector.collect(self)
+
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
+
         agent_scores = []
         for agent in self._agents:
             agent_scores.append([agent.unique_id,

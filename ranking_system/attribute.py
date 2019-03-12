@@ -1,4 +1,5 @@
-"""The Good class represents a purchasable good in the ranking system."""
+"""The Attribute class represents a purchasable attribute
+   in the ranking system."""
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -7,13 +8,13 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
-class Good:
-    """The Goods class."""
+class Attribute:
+    """The Attribute class."""
     def __init__(self, name, ranking_weight, initial_quantity=0.0):
-        """Initialize the good.
+        """Initialize the attribute.
 
-        :param name: The name of the good.
-        :param ranking_weight: The weight of this good in the ranking process.
+        :param name: The name of the attribute.
+        :param ranking_weight: The weight used in the ranking process.
         :param initial_quantity: The initial quantity. (default 0.0)
         """
 
@@ -25,7 +26,7 @@ class Good:
         self._quantity = quantity
 
     def simple_production_function(self, capital, alpha):
-        """The simple production function for this good.
+        """The simple production function for this attribute.
 
         :param capital: The input capital.
         :param alpha: The input elasticity alpha.
@@ -35,7 +36,7 @@ class Good:
 
     def cobb_douglas_production_function(self, total_factor_productivity,
                                          labor, capital, alpha, beta):
-        """The Cobb-Douglas production function for this good.
+        """The Cobb-Douglas production function for this attribute.
 
         :param total_factor_productivity: The total-factor productivity (TFP).
         :param labor: The input labor.
@@ -48,8 +49,8 @@ class Good:
                            * (labor ** beta)
                            * (capital ** alpha))
 
-    def ranking_value(self):
-        """The value of this good in the ranking."""
+    def valuation(self):
+        """The value of this attribute in the ranking."""
 
         return self._quantity * self._ranking_weight
 

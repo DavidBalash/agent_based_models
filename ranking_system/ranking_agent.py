@@ -2,6 +2,8 @@
 import copy
 from mesa import Agent
 
+__name__ = "ranking_agent"
+__package__ = "ranking_system"
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
@@ -18,6 +20,7 @@ class RankingAgent(Agent):
         :param unique_id: the unique identifier for this agent.
         :param model: the model associated with this agent.
         """
+
         super().__init__(unique_id, model)
         # Initialize the agent's production input elasticity value alpha.
         self._alpha = self.random.random()
@@ -34,11 +37,11 @@ class RankingAgent(Agent):
         # Initialize the agent's score.
         self.score = 0
 
-        # Start with a certain amount of goods
-        for good in self.model.goods:
-            inventory_good = copy.deepcopy(good)
-            inventory_good.set_quantity(self.random.uniform(50, 75))
-            self._inventory.append(inventory_good)
+        # Start with a certain amount of attributes
+        for attribute in self.model.attributes:
+            inventory_attribute = copy.deepcopy(attribute)
+            inventory_attribute.set_quantity(self.random.uniform(50, 75))
+            self._inventory.append(inventory_attribute)
 
         # Calculate the initial score
         self._calculate_score()
@@ -48,32 +51,36 @@ class RankingAgent(Agent):
 
         This is the agent’s action when it is activated.
         """
-        self._buy_goods()
+
+        self._buy_attributes()
         self._increment_budget()
         self._calculate_score()
 
-    def _buy_goods(self):
-        """Buy goods based on budget."""
-        # Randomly buy goods.
-        for good in self._inventory:
+    def _buy_attributes(self):
+        """Buy attributes based on budget."""
+
+        # Randomly buy attributes.
+        for attribute in self._inventory:
             capital_expenditure = self.random.uniform(0, self._budget)
-            good.simple_production_function(capital_expenditure,
-                                            self.random.random())
+            attribute.simple_production_function(capital_expenditure,
+                                                 self.random.random())
             self._budget -= capital_expenditure
 
     def _increment_budget(self):
         """Increment the budget based on the income per time step."""
+
         # Add the income for this step to the budget.
         self._budget += self._budget_step_increment_size
 
     def _calculate_score(self):
         """Calculate the agent's current score based on inventory."""
+
         # Reset the score
         self.score = 0
 
         # For each item in inventory add the ranking value the score
-        for good in self._inventory:
-            self.score += good.ranking_value()
+        for attribute in self._inventory:
+            self.score += attribute.valuation()
 
 # Agent based models
 # Copyright (C) 2019 David Balash

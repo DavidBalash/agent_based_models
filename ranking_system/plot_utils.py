@@ -1,9 +1,26 @@
 import itertools
 
 
-# Plot the total volatility over time
+def get_score_by_agent(model):
+    """Get the score by agent dictionary from the model.
+
+    :param model: The ranking model.
+    :return: The score by agent dictionary.
+    """
+    agent_vars_df = model.data_collector.get_agent_vars_dataframe()
+    score_by_agent = {}
+
+    for agent, df in agent_vars_df.groupby('Unique ID'):
+        score_by_agent[agent] = []
+        for _, row in df.iterrows():
+            score_by_agent[agent].append(row.Score)
+
+    return score_by_agent
+
+
 def list_line_plot(plt, data, xlabel, ylabel, title, xlim_left=None,
                    xlim_right=None, ylim_bottom=0, ylim_top=None):
+    """Plot the total volatility over time."""
     fig, ax = plt.subplots()
     ax.plot(data, marker='s', fillstyle='full', markerfacecolor='w',
             markeredgecolor='grey')
@@ -13,9 +30,9 @@ def list_line_plot(plt, data, xlabel, ylabel, title, xlim_left=None,
     plt.tick_params(direction='in', top=True, right=True)
 
 
-# Plot the agent volatility over time
 def dictionary_line_plot(plt, data, xlabel, ylabel, title, xlim_left=None,
                          xlim_right=None, ylim_bottom=0, ylim_top=None):
+    """Plot the agent volatility over time."""
     fig, ax = plt.subplots()
     marker = itertools.cycle(('o', 's', 'h', 'd', 'p', 'v', '^', '<', '>', 'H',
                               'D', '*', '|', 'x', '1', '2', '3', '4'))
