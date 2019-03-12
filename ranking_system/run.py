@@ -1,7 +1,7 @@
 """Run the ranking model."""
+import plot_utils
 import matplotlib.pyplot as plt
-from commodity import Commodity
-from matplotlib.ticker import FuncFormatter
+from good import Good
 from ranking_dynamics_volatility import RankingDynamicsVolatility
 from ranking_model import RankingModel
 
@@ -13,12 +13,10 @@ __status__ = "Prototype"
 
 
 number_of_steps = 10
-number_of_agents = 8
-commodities = [Commodity('commodity-1', 0.6, 0.2),
-               Commodity('commodity-2', 0.4, 0.1)]
+number_of_agents = 5
+goods = [Good('good-1', 0.6), Good('good-2', 0.4)]
 
-
-model = RankingModel(number_of_agents, commodities)
+model = RankingModel(number_of_agents, goods)
 normalized_mean_strengths = []
 volatility_by_agent = {}
 
@@ -41,66 +39,33 @@ for step in range(number_of_steps + 1):
         normalized_mean_strengths.append(None)
 
 
-fig1, ax1 = plt.subplots()
-ax1.plot(normalized_mean_strengths)
-ax1.plot(normalized_mean_strengths, 's', fillstyle='full', color='w',
-         markeredgecolor='grey')
-ax1.set(xlabel='time', ylabel='normalized mean strength (NS)',
-        title='Volatility over time')
-ax1.grid(False)  # (axis='y', linestyle='--')
-plt.xlim(1, number_of_steps)
-plt.ylim(0,)
-# Set the plot tick parameters so that the ticks are facing inward and on both
-# the top and the bottom of the plot.
-plt.tick_params(direction='in', top=True, right=True)
+agent_vars_df = model.data_collector.get_agent_vars_dataframe()
 
-legend_labels = []
-fig2, ax2 = plt.subplots()
-for agent, volatility in volatility_by_agent.items():
-    legend_labels.append(agent)
-    ax2.plot(volatility, label=agent)
+score_by_agent = {}
+# Setup volatility by agent dictionary by adding an empty list for each agent
+for agent, df in agent_vars_df.groupby('Unique ID'):
+    score_by_agent[agent] = []
+    for _, row in df.iterrows():
+        score_by_agent[agent].append(row.Score)
 
-ax2.set(xlabel='time', ylabel='relative volatility',
-        title='Agent volatility over time')
-ax2.legend(labels=legend_labels, fontsize='small')
-plt.xlim(1, number_of_steps)
-plt.ylim(0,)
-plt.tick_params(direction='in', top=True, right=True)
-
-agent_df = model.data_collector.get_agent_vars_dataframe()
-
-fig, ax = plt.subplots()
-
-legend_labels = []
-for label, df in agent_df.groupby('Unique ID'):
-    legend_labels.append(label)
-    df.plot(ax=ax)
-
-ax.legend(labels=legend_labels, fontsize='small')
-ax.set(xlabel='time', ylabel='score', title='Agent score over time')
-ax.grid(False)
-
-plt.xlim(0, number_of_steps)
-plt.ylim(0,)
-
-# Set the plot tick parameters so that the ticks are facing inward and on both
-# the top and the bottom of the plot.
-plt.tick_params(direction='in', top=True, right=True)
+# Plot the total volatility over time
+plot_utils.list_line_plot(plt, normalized_mean_strengths, 'time',
+                          'normalized mean strength (NS)',
+                          'Volatility over time', 1, number_of_steps)
 
 
-def format_fn(tick_val, _):
-    """Tick formatting function.
-    :param tick_val: The tick value used to determine label.
-    :param _: An unused parameter tick_pos.
-    :return: The label for the tick value.
-    """
-    if int(tick_val) in range(1, number_of_steps):
-        return int(tick_val)
-    else:
-        return ''
+# Plot the agent volatility over time
+plot_utils.dictionary_line_plot(plt, volatility_by_agent, 'time',
+                                'relative volatility',
+                                'Agent volatility over time', 1,
+                                number_of_steps)
 
 
-ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
+# Plot the agent score over time
+plot_utils.dictionary_line_plot(plt, score_by_agent, 'time',
+                                'score',
+                                'Agent score over time', 0,
+                                number_of_steps)
 
 plt.show()
 

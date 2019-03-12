@@ -16,14 +16,15 @@ __status__ = "Prototype"
 class RankingModel(Model):
     """The ranking model class."""
 
-    def __init__(self, number_of_agents, commodities):
+    def __init__(self, number_of_agents, goods):
         """Constructor for the RankingModel class.
 
-        :param commodities: The list of commodities.
+        :param number_of_agents: The number of agents.
+        :param goods: The list of goods.
         """
         super().__init__()
         self._agents = []
-        self.commodities = commodities
+        self.goods = goods
 
         # The RandomActivation scheduler activates all the agents once per
         # step, in random order.

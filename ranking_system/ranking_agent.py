@@ -1,7 +1,6 @@
 """Ranking agent class file."""
 import copy
 from mesa import Agent
-from numpy import random
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -20,11 +19,14 @@ class RankingAgent(Agent):
         :param model: the model associated with this agent.
         """
         super().__init__(unique_id, model)
+        # Initialize the agent's production input elasticity value alpha.
+        self._alpha = self.random.random()
+
         # Initialize the agent's budget.
-        self._budget = random.uniform(50, 100)
+        self._budget = self.random.uniform(50, 100)
 
         # Initialize the random budget increment for this agent.
-        self._budget_step_increment_size = random.uniform(50, 100)
+        self._budget_step_increment_size = self.random.uniform(50, 100)
 
         # Initialize the agent's inventory.
         self._inventory = []
@@ -32,11 +34,11 @@ class RankingAgent(Agent):
         # Initialize the agent's score.
         self.score = 0
 
-        # Start with a certain amount of commodities
-        for commodity in self.model.commodities:
-            inventory_commodity = copy.deepcopy(commodity)
-            inventory_commodity.quantity = random.uniform(150, 200)
-            self._inventory.append(inventory_commodity)
+        # Start with a certain amount of goods
+        for good in self.model.goods:
+            inventory_good = copy.deepcopy(good)
+            inventory_good.set_quantity(self.random.uniform(50, 75))
+            self._inventory.append(inventory_good)
 
         # Calculate the initial score
         self._calculate_score()
@@ -46,24 +48,18 @@ class RankingAgent(Agent):
 
         This is the agent’s action when it is activated.
         """
-        self._buy_commodities()
+        self._buy_goods()
         self._increment_budget()
         self._calculate_score()
-        self._depreciate_inventory()
 
-    def _buy_commodities(self):
-        """Buy commodities based on budget."""
-        # Randomly buy commodities.
-        for commodity in self._inventory:
-            purchase_amount = random.uniform(0, self._budget)
-            commodity.quantity += purchase_amount
-            self._budget -= purchase_amount
-
-    def _depreciate_inventory(self):
-        """Reduce the current inventory through utilization."""
-        # For each item in inventory utilize a random portion.
-        for commodity in self._inventory:
-            commodity.depreciate()
+    def _buy_goods(self):
+        """Buy goods based on budget."""
+        # Randomly buy goods.
+        for good in self._inventory:
+            capital_expenditure = self.random.uniform(0, self._budget)
+            good.simple_production_function(capital_expenditure,
+                                            self.random.random())
+            self._budget -= capital_expenditure
 
     def _increment_budget(self):
         """Increment the budget based on the income per time step."""
@@ -75,9 +71,9 @@ class RankingAgent(Agent):
         # Reset the score
         self.score = 0
 
-        # For each item in inventory add the quantity times price to the score
-        for commodity in self._inventory:
-            self.score += commodity.total_value()
+        # For each item in inventory add the ranking value the score
+        for good in self._inventory:
+            self.score += good.ranking_value()
 
 # Agent based models
 # Copyright (C) 2019 David Balash
