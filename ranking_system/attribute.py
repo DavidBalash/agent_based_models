@@ -23,6 +23,11 @@ class Attribute:
         self._quantity = initial_quantity
 
     def set_quantity(self, quantity):
+        """Set the quantity of the attribute.
+
+        :param quantity: The quantity to set.
+        """
+
         self._quantity = quantity
 
     def simple_production_function(self, capital, alpha):
@@ -34,6 +39,7 @@ class Attribute:
 
         self._quantity += capital ** alpha
 
+    # pylint: disable=too-many-arguments
     def cobb_douglas_production_function(self, total_factor_productivity,
                                          labor, capital, alpha, beta):
         """The Cobb-Douglas production function for this attribute.

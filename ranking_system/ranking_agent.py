@@ -2,8 +2,6 @@
 import copy
 from mesa import Agent
 
-__name__ = "ranking_agent"
-__package__ = "ranking_system"
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"

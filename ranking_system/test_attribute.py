@@ -15,6 +15,7 @@ class TestAttribute(unittest.TestCase):
 
     def test_simple_production_function(self):
         """Test the simple production function."""
+
         capital = 4
         alpha = 0.5
         attribute = Attribute("attribute-1", 0.5)
@@ -24,6 +25,7 @@ class TestAttribute(unittest.TestCase):
 
     def test_cobb_douglas_production_function(self):
         """Test the simple production function."""
+
         capital = 4
         labor = 9
         alpha = 0.5
@@ -36,7 +38,9 @@ class TestAttribute(unittest.TestCase):
                          tfp * (labor ** beta) * (capital ** alpha),
                          "Attribute quantity not correct.")
 
-    def test_ranking_value(self):
+    def test_valuation(self):
+        """Test the valuation function."""
+
         initial_quantity = 10
         ranking_weight = 0.5
         attribute = Attribute("attribute-1", ranking_weight, initial_quantity)

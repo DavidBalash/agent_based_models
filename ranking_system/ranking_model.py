@@ -6,8 +6,6 @@ from mesa.time import RandomActivation
 
 from .ranking_agent import RankingAgent
 
-__name__ = "ranking_model"
-__package__ = "ranking_system"
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"

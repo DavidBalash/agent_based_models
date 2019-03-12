@@ -17,6 +17,7 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def setUp(self):
         """Unit test setup method."""
+
         # S = {s, t, u, v, w, x, y, z}
         # c1 = (s, t, u, v; [w, x, y, z])
         # c2 = (s, u, w, x; [t, v, y, z])
@@ -32,6 +33,7 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def test_init(self):
         """Test the init for the RankingDynamicsVolatility class."""
+
         volatility = RankingDynamicsVolatility(self._ranking)
         periods = [1, 2, 3, 4]
         self.assertEqual(volatility._periods, periods,
@@ -43,12 +45,14 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def test_create_events(self):
         """Test the create events function."""
+
         volatility = RankingDynamicsVolatility(self._ranking)
         events = pd.read_csv('./unit_test_data/events.csv', index_col=False)
         assert_frame_equal(volatility._events, events)
 
     def test_calculate_position_shift(self):
         """Test the calculate position shift function."""
+
         volatility = RankingDynamicsVolatility(self._ranking)
 
         # element1 becomes inactive
@@ -78,6 +82,7 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
 
     def test_calculate_volatility(self):
         """Test the calculate volatility function."""
+
         volatility = RankingDynamicsVolatility(self._ranking)
         total_results = volatility.get_results()
         partial_results = pd.read_csv('./unit_test_data/partial_results.csv',
@@ -100,14 +105,17 @@ class TestRankingDynamicsVolatility(unittest.TestCase):
                          normalized_mean_strength,
                          'Normalized mean strength not correct.')
 
-    def test_results(self):
+    def test_get_results(self):
         """Test the volatility results."""
+
         ranking = pd.read_csv('./unit_test_data/ranking.csv', index_col=False)
         volatility = RankingDynamicsVolatility(ranking)
         results = volatility.get_results()
         total_results = pd.read_csv('./unit_test_data/total_results.csv',
                                     index_col=False)
         assert_frame_equal(results, total_results)
+        self.assertEqual(results.size, total_results.size,
+                         'Result size not correct.')
 
 
 if __name__ == '__main__':
