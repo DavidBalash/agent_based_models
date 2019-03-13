@@ -18,14 +18,14 @@ normalized_mean_strengths = []
 volatility_by_agent = {}
 
 # Setup volatility by agent dictionary by adding an empty list for each agent
-for agent in range(number_of_agents):
-    volatility_by_agent['agent-{}'.format(agent)] = [None]
+for agent in model.agents:
+    volatility_by_agent[agent.unique_id] = [None]
 
 # Manually step though the number of steps
 for step in range(number_of_steps + 1):
     model.step()
     if step > 0:
-        model_df = model.data_collector.get_table_dataframe('Agent rank')
+        model_df = model.data_collector.get_table_dataframe('ranking')
         ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
         normalized_mean_strengths.append(ranking_dynamics_volatility
                                          .get_normalized_mean_strength())
@@ -37,19 +37,15 @@ for step in range(number_of_steps + 1):
 
 
 # Plot the total volatility over time
-list_line_plot(plt, normalized_mean_strengths, 'time',
-               'normalized mean strength (NS)', 'Volatility over time', 1,
-               number_of_steps)
-
+line_plot(normalized_mean_strengths, 'time', 'normalized mean strength (NS)',
+          'Volatility over time')
 
 # Plot the agent volatility over time
-dictionary_line_plot(plt, volatility_by_agent, 'time', 'relative volatility',
-                     'Agent volatility over time', 1, number_of_steps)
-
+line_plot(volatility_by_agent, 'time', 'relative volatility',
+          'Agent volatility over time')
 
 # Plot the agent score over time
-dictionary_line_plot(plt, get_score_by_agent(model), 'time', 'score',
-                     'Agent score over time', 0, number_of_steps)
+line_plot(get_score_by_agent(model), 'time', 'score', 'Agent score over time')
 
 plt.show()
 

@@ -1,5 +1,6 @@
 """The ranking model class file."""
 import pandas as pd
+from IPython.display import display
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
@@ -24,7 +25,7 @@ class RankingModel(Model):
         """
 
         super().__init__()
-        self._agents = []
+        self.agents = []
         self.attributes = attributes
 
         # The RandomActivation scheduler activates all the agents once per
@@ -32,21 +33,36 @@ class RankingModel(Model):
         self.schedule = RandomActivation(self)
 
         # Create and schedule ranking agents.
-        for agent_count in range(number_of_agents):
-            unique_id = "agent-{}".format(agent_count)
+        for agent_count in range(1, number_of_agents + 1):
+            unique_id = "University {}".format(agent_count)
             agent = RankingAgent(unique_id, self)
-            self._agents.append(agent)
+            self.agents.append(agent)
             self.schedule.add(agent)
 
         # Setup a data collector
         self.data_collector = DataCollector(
             # A model attribute
-            tables={"Agent rank": ["element", "period", "position", "score"]},
+            tables={"ranking": ["element", "period", "position", "score"]},
             # An agent attribute
-            agent_reporters={"Score": "score", "Unique ID": "unique_id"})
+            agent_reporters={"Score": "score"})
 
         # Collect data at time t = 0
         self.data_collector.collect(self)
+
+    def display_ranking(self):
+        ranking = self.data_collector.get_table_dataframe('ranking')
+        ranking.columns = ['University', 'Time', 'Rank', 'Score']
+        with pd.option_context('display.max_rows', len(self.agents) * 4):
+            display(ranking)
+
+    def run(self, number_of_steps):
+        """Run the model for the input number of time steps.
+
+        :param number_of_steps: The number of time steps to run the model.
+        """
+
+        for step in range(number_of_steps):
+            self.step()
 
     def step(self):
         """Advance the model by one step."""
@@ -65,7 +81,7 @@ class RankingModel(Model):
         """Update the agent's ranking based on agent score."""
 
         agent_scores = []
-        for agent in self._agents:
+        for agent in self.agents:
             agent_scores.append([agent.unique_id,
                                  self.schedule.time,
                                  agent.score])
@@ -77,7 +93,7 @@ class RankingModel(Model):
         agent_rank['position'] = agent_rank['score'].rank(ascending=False)
 
         for row in agent_rank.to_dict('records'):
-            self.data_collector.add_table_row("Agent rank", row)
+            self.data_collector.add_table_row("ranking", row)
 
 # Agent based models
 # Copyright (C) 2019 David Balash
