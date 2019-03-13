@@ -22,8 +22,8 @@ def get_score_by_agent(model):
 
 
 # pylint: disable=too-many-arguments
-def line_plot(data, xlabel, ylabel, title, xlim_left=0, xlim_right=None,
-              ylim_bottom=0, ylim_top=None):
+def line_plot(data, xlabel, ylabel, title, xlim_left=None, xlim_right=None,
+              ylim_bottom=None, ylim_top=None):
     if type(data) is list:
         list_line_plot(data, xlabel, ylabel, title, xlim_left=xlim_left,
                        xlim_right=xlim_right, ylim_bottom=ylim_bottom,
@@ -34,8 +34,8 @@ def line_plot(data, xlabel, ylabel, title, xlim_left=0, xlim_right=None,
                              ylim_bottom=ylim_bottom, ylim_top=ylim_top)
 
 
-def list_line_plot(data, xlabel, ylabel, title, xlim_left=0, xlim_right=None,
-                   ylim_bottom=0, ylim_top=None):
+def list_line_plot(data, xlabel, ylabel, title, xlim_left=None, xlim_right=None,
+                   ylim_bottom=None, ylim_top=None):
     """Plot the total volatility over time."""
 
     _, axes = plt.subplots()
@@ -47,8 +47,8 @@ def list_line_plot(data, xlabel, ylabel, title, xlim_left=0, xlim_right=None,
     plt.tick_params(direction='in', top=True, right=True)
 
 
-def dictionary_line_plot(data, xlabel, ylabel, title, xlim_left=0,
-                         xlim_right=None, ylim_bottom=0, ylim_top=None):
+def dictionary_line_plot(data, xlabel, ylabel, title, xlim_left=None,
+                         xlim_right=None, ylim_bottom=None, ylim_top=None):
     """Plot the agent volatility over time."""
 
     _, axes = plt.subplots()

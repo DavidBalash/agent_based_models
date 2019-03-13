@@ -49,11 +49,17 @@ class RankingModel(Model):
         # Collect data at time t = 0
         self.data_collector.collect(self)
 
-    def display_ranking(self):
+    def display_ranking(self, max_rows=None, all_rows=False):
         ranking = self.data_collector.get_table_dataframe('ranking')
         ranking.columns = ['University', 'Time', 'Rank', 'Score']
-        with pd.option_context('display.max_rows', len(self.agents) * 4):
+        if all_rows:
             display(ranking)
+        elif max_rows is not None:
+            with pd.option_context('display.max_rows', max_rows):
+                display(ranking)
+        else:
+            with pd.option_context('display.max_rows', len(self.agents) * 4):
+                display(ranking)
 
     def run(self, number_of_steps):
         """Run the model for the input number of time steps.
