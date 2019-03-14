@@ -35,7 +35,10 @@ class RankingAgent(Agent):
         # Initialize the agent's score.
         self.score = 0
 
-        # Start with a certain amount of attributes
+        # Initialize the agent's normalized score.
+        self.normalized_score = 0
+
+        # Start with a certain amount of attributes.
         for attribute in self.model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
             inventory_attribute.set_quantity(self.random.uniform(50, 75))

@@ -1,6 +1,7 @@
 """Ranking system package."""
 from .attribute import Attribute
 from .plot_utils import dictionary_line_plot
+from .plot_utils import get_normalized_score_by_agent
 from .plot_utils import get_score_by_agent
 from .plot_utils import line_plot
 from .plot_utils import list_line_plot
@@ -8,8 +9,8 @@ from .ranking_agent import RankingAgent
 from .ranking_dynamics_volatility import RankingDynamicsVolatility
 from .ranking_model import RankingModel
 
-__all__ = ["Attribute", "dictionary_line_plot", "get_score_by_agent",
-           "line_plot", "list_line_plot", "RankingAgent",
+__all__ = ["Attribute", "dictionary_line_plot", "get_normalized_score_by_agent",
+           "get_score_by_agent", "line_plot", "list_line_plot", "RankingAgent",
            "RankingDynamicsVolatility", "RankingModel"]
 
 __name__ = "ranking_system"

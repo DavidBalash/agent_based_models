@@ -1,4 +1,5 @@
 """The ranking model class file."""
+import numpy as np
 import pandas as pd
 from IPython.display import display
 from mesa import Model
@@ -17,16 +18,22 @@ __status__ = "Prototype"
 class RankingModel(Model):
     """The ranking model class."""
 
-    def __init__(self, number_of_agents, attributes):
+    DECIMAL_PLACES = 2
+
+    NORMALIZED_SCORE_RANGE = [0, 100]
+
+    def __init__(self, number_of_agents, attributes, settings=None):
         """Constructor for the RankingModel class.
 
         :param number_of_agents: The number of agents.
         :param attributes: The list of attributes.
+        :param settings: The settings dictionary.
         """
 
         super().__init__()
         self.agents = []
         self.attributes = attributes
+        self.settings = settings if settings is not None else {}
 
         # The RandomActivation scheduler activates all the agents once per
         # step, in random order.
@@ -42,16 +49,20 @@ class RankingModel(Model):
         # Setup a data collector
         self.data_collector = DataCollector(
             # A model attribute
-            tables={"ranking": ["element", "period", "position", "score"]},
+            tables={"ranking": ["element", "period", "position", "score",
+                                "normalized_score"]},
             # An agent attribute
-            agent_reporters={"Score": "score"})
+            agent_reporters={"score": "score",
+                             "normalized_score": "normalized_score"})
 
         # Collect data at time t = 0
-        self.data_collector.collect(self)
+        # self._update_ranking()
+        # self.data_collector.collect(self)
 
     def display_ranking(self, max_rows=None, all_rows=False):
         ranking = self.data_collector.get_table_dataframe('ranking')
-        ranking.columns = ['University', 'Time', 'Rank', 'Score']
+        ranking.columns = ['University', 'Time', 'Rank', 'Score',
+                           'Normalized Score']
         if all_rows:
             display(ranking)
         elif max_rows is not None:
@@ -83,20 +94,48 @@ class RankingModel(Model):
         # Collect data.
         self.data_collector.collect(self)
 
+    def _current_high_score(self):
+        """Get the current high score.
+
+        :return: The high score value.
+        """
+
+        scores = []
+        for agent in self.agents:
+            scores.append(agent.score)
+
+        return max(scores)
+
+    def _normalize_score(self, score):
+        """Normalize the score.
+
+        :param score: The score to normalize.
+        :return: The normalized score.
+        """
+
+        score_interval = [0, self._current_high_score()]
+        return int(round(np.interp(score, score_interval,
+                                   self.NORMALIZED_SCORE_RANGE)))
+
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
 
         agent_scores = []
         for agent in self.agents:
+            agent.normalized_score = self._normalize_score(agent.score)
             agent_scores.append([agent.unique_id,
                                  self.schedule.time,
-                                 agent.score])
+                                 round(agent.score, self.DECIMAL_PLACES),
+                                 agent.normalized_score])
 
         agent_rank = pd.DataFrame(agent_scores,
-                                  columns=['element', 'period', 'score'])
+                                  columns=['element', 'period', 'score',
+                                           'normalized_score'])
 
         # Use pandas data frame to rank the agents.
-        agent_rank['position'] = agent_rank['score'].rank(ascending=False)
+        agent_rank['position'] =\
+            agent_rank['normalized_score'].rank(method='min',
+                                                ascending=False).astype(int)
 
         for row in agent_rank.to_dict('records'):
             self.data_collector.add_table_row("ranking", row)

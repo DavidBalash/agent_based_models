@@ -14,9 +14,27 @@ def get_score_by_agent(model):
     score_by_agent = {}
 
     for agent, data_frame in agent_vars_df.groupby('AgentID'):
-        score_by_agent[agent] = []
+        score_by_agent[agent] = [None]
         for _, row in data_frame.iterrows():
-            score_by_agent[agent].append(row.Score)
+            score_by_agent[agent].append(row.score)
+
+    return score_by_agent
+
+
+def get_normalized_score_by_agent(model):
+    """Get the normalized score by agent dictionary from the model.
+
+    :param model: The ranking model.
+    :return: The normalized score by agent dictionary.
+    """
+
+    agent_vars_df = model.data_collector.get_agent_vars_dataframe()
+    score_by_agent = {}
+
+    for agent, data_frame in agent_vars_df.groupby('AgentID'):
+        score_by_agent[agent] = [None]
+        for _, row in data_frame.iterrows():
+            score_by_agent[agent].append(row.normalized_score)
 
     return score_by_agent
 
