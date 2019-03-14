@@ -1,7 +1,6 @@
 """The ranking model class file."""
 import numpy as np
 import pandas as pd
-from IPython.display import display
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.time import RandomActivation
@@ -22,15 +21,17 @@ class RankingModel(Model):
 
     NORMALIZED_SCORE_RANGE = [0, 100]
 
-    def __init__(self, number_of_agents, attributes, settings=None):
+    def __init__(self, number_of_agents, attributes, seed=None, settings=None):
         """Constructor for the RankingModel class.
 
         :param number_of_agents: The number of agents.
         :param attributes: The list of attributes.
+        :param seed: The seed for the random number generator.
         :param settings: The settings dictionary.
         """
 
         super().__init__()
+        self.reset_randomizer(seed)
         self.agents = []
         self.attributes = attributes
         self.settings = settings if settings is not None else {}
@@ -55,30 +56,13 @@ class RankingModel(Model):
             agent_reporters={"score": "score",
                              "normalized_score": "normalized_score"})
 
-        # Collect data at time t = 0
-        # self._update_ranking()
-        # self.data_collector.collect(self)
-
-    def display_ranking(self, max_rows=None, all_rows=False):
-        ranking = self.data_collector.get_table_dataframe('ranking')
-        ranking.columns = ['University', 'Time', 'Rank', 'Score',
-                           'Normalized Score']
-        if all_rows:
-            display(ranking)
-        elif max_rows is not None:
-            with pd.option_context('display.max_rows', max_rows):
-                display(ranking)
-        else:
-            with pd.option_context('display.max_rows', len(self.agents) * 4):
-                display(ranking)
-
     def run(self, number_of_steps):
         """Run the model for the input number of time steps.
 
         :param number_of_steps: The number of time steps to run the model.
         """
 
-        for step in range(number_of_steps):
+        for _ in range(number_of_steps):
             self.step()
 
     def step(self):
@@ -134,8 +118,7 @@ class RankingModel(Model):
 
         # Use pandas data frame to rank the agents.
         agent_rank['position'] =\
-            agent_rank['normalized_score'].rank(method='min',
-                                                ascending=False).astype(int)
+            agent_rank['score'].rank(method='min', ascending=False).astype(int)
 
         for row in agent_rank.to_dict('records'):
             self.data_collector.add_table_row("ranking", row)

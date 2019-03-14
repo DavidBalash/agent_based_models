@@ -44,9 +44,6 @@ class RankingAgent(Agent):
             inventory_attribute.set_quantity(self.random.uniform(50, 75))
             self._inventory.append(inventory_attribute)
 
-        # Calculate the initial score
-        self._calculate_score()
-
     def step(self):
         """The agent's step method.
 

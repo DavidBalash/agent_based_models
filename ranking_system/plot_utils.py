@@ -1,6 +1,8 @@
 """Utility functions used to plot."""
 import itertools
 import matplotlib.pyplot as plt
+import pandas as pd
+from IPython.display import display
 
 
 def get_score_by_agent(model):
@@ -39,14 +41,35 @@ def get_normalized_score_by_agent(model):
     return score_by_agent
 
 
+def display_ranking(model, max_rows=None, all_rows=False):
+    """Display the ranking data frame.
+
+    :param model: The model to display.
+    :param max_rows: The maximum number of rows to display.
+    :param all_rows: All rows boolean flag.
+    """
+    ranking = model.data_collector.get_table_dataframe('ranking')
+    ranking.columns = ['University', 'Time', 'Rank', 'Score',
+                       'Normalized Score']
+    if all_rows:
+        display(ranking)
+    elif max_rows is not None:
+        with pd.option_context('display.max_rows', max_rows):
+            display(ranking)
+    else:
+        with pd.option_context('display.max_rows', len(model.agents) * 4):
+            display(ranking)
+
+
 # pylint: disable=too-many-arguments
 def line_plot(data, xlabel, ylabel, title, xlim_left=None, xlim_right=None,
               ylim_bottom=None, ylim_top=None):
-    if type(data) is list:
+    """Line plot function."""
+    if isinstance(data, list):
         list_line_plot(data, xlabel, ylabel, title, xlim_left=xlim_left,
                        xlim_right=xlim_right, ylim_bottom=ylim_bottom,
                        ylim_top=ylim_top)
-    elif type(data) is dict:
+    elif isinstance(data, dict):
         dictionary_line_plot(data, xlabel, ylabel, title,
                              xlim_left=xlim_left, xlim_right=xlim_right,
                              ylim_bottom=ylim_bottom, ylim_top=ylim_top)

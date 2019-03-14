@@ -17,16 +17,16 @@ attributes = [Attribute('attribute-1', 0.6), Attribute('attribute-2', 0.4)]
 model = RankingModel(number_of_agents, attributes)
 
 if RUN_VOLATILITY:
-    normalized_mean_strengths = []
+    normalized_mean_strengths = [None, None]
     volatility_by_agent = {}
 
     # Setup volatility by agent dictionary
     # by adding an empty list for each agent
     for agent in model.agents:
-        volatility_by_agent[agent.unique_id] = [None]
+        volatility_by_agent[agent.unique_id] = [None, None]
 
     # Manually step though the number of steps
-    for step in range(number_of_steps + 1):
+    for step in range(number_of_steps):
         model.step()
         if step > 0:
             model_df = model.data_collector.get_table_dataframe('ranking')
@@ -36,8 +36,6 @@ if RUN_VOLATILITY:
             total_results = ranking_dynamics_volatility.get_results()
             for _, row in total_results.iterrows():
                 volatility_by_agent[row.element].append(row.volatility)
-        else:
-            normalized_mean_strengths.append(None)
 
     # Plot the total volatility over time
     line_plot(normalized_mean_strengths, 'time',
@@ -57,7 +55,7 @@ else:
     for step in range(number_of_steps):
         model.step()
 
-    model.display_ranking(all_rows=False)
+    display_ranking(model, all_rows=False)
 
     line_plot(get_normalized_score_by_agent(model), 'time', 'normalized score',
               'Scores over time')
