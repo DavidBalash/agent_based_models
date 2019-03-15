@@ -78,7 +78,7 @@ class RankingAgent(Agent):
 
         # For each item in inventory add the ranking value the score
         for attribute in self._inventory:
-            self.score += attribute.valuation()
+            self.score += attribute.valuation(self.model.schedule.time)
 
 # Agent based models
 # Copyright (C) 2019 David Balash

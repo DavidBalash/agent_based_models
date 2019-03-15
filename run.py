@@ -12,7 +12,24 @@ RUN_VOLATILITY = False
 
 number_of_steps = 10
 number_of_agents = 5
-attributes = [Attribute('attribute-1', 0.6), Attribute('attribute-2', 0.4)]
+
+
+# Create weightage functions that will return the weight used for time t
+# The sum of the weightage functions at time t must add up to one
+def weightage_1(t):
+    """Weight given to attribute l changes at time t greater than 5"""
+    return 0.7 if t < 5 else 0.6
+
+
+def weightage_2(t):
+    """Weight given to attribute 2 changes at time t greater than 5"""
+    return 0.3 if t < 5 else 0.4
+
+
+# Create a list of M attributes
+# (name, weightage function)
+attributes = [Attribute('research', weightage_1),
+              Attribute('faculty', weightage_2)]
 
 model = RankingModel(number_of_agents, attributes)
 

@@ -10,25 +10,20 @@ __status__ = "Prototype"
 
 class Attribute:
     """The Attribute class."""
-    def __init__(self, name, ranking_weight, initial_quantity=0.0):
+    def __init__(self, name, weightage_function, valuation_function,
+                 initial_value=0.0):
         """Initialize the attribute.
 
         :param name: The name of the attribute.
-        :param ranking_weight: The weight used in the ranking process.
-        :param initial_quantity: The initial quantity. (default 0.0)
+        :param weightage_function: The weightage function used in ranking.
+        :param valuation_function: The valuation function used in ranking.
+        :param initial_value: The initial value. (default 0.0)
         """
 
         self.name = name
-        self._ranking_weight = ranking_weight
-        self._quantity = initial_quantity
-
-    def set_quantity(self, quantity):
-        """Set the quantity of the attribute.
-
-        :param quantity: The quantity to set.
-        """
-
-        self._quantity = quantity
+        self._value = initial_value
+        self._valuation_function = valuation_function
+        self._weightage_function = weightage_function
 
     def simple_production_function(self, capital, alpha):
         """The simple production function for this attribute.
@@ -37,7 +32,7 @@ class Attribute:
         :param alpha: The input elasticity alpha.
         """
 
-        self._quantity += capital ** alpha
+        self._value += capital ** alpha
 
     # pylint: disable=too-many-arguments
     def cobb_douglas_production_function(self, total_factor_productivity,
@@ -51,14 +46,18 @@ class Attribute:
         :param beta: The input elasticity beta.
         """
 
-        self._quantity += (total_factor_productivity
-                           * (labor ** beta)
-                           * (capital ** alpha))
+        self._value += (total_factor_productivity
+                        * (labor ** beta)
+                        * (capital ** alpha))
 
-    def valuation(self):
-        """The value of this attribute in the ranking."""
+    def valuation(self, time_step):
+        """The value of this attribute in the ranking.
 
-        return self._quantity * self._ranking_weight
+        :param time_step: The current time step t.
+        """
+
+        return (self._valuation_function(self._value)
+                * self._weightage_function(time_step))
 
 # Agent based models
 # Copyright (C) 2019 David Balash
