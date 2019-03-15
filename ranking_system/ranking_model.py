@@ -21,17 +21,18 @@ class RankingModel(Model):
 
     NORMALIZED_SCORE_RANGE = [0, 100]
 
-    def __init__(self, number_of_agents, attributes, seed=None, settings=None):
+    def __init__(self, number_of_agents, attributes, random_seed=None,
+                 settings=None):
         """Constructor for the RankingModel class.
 
         :param number_of_agents: The number of agents.
         :param attributes: The list of attributes.
-        :param seed: The seed for the random number generator.
+        :param random_seed: The seed for the random number generator.
         :param settings: The settings dictionary.
         """
 
         super().__init__()
-        self.reset_randomizer(seed)
+        self.reset_randomizer(random_seed)
         self.agents = []
         self.attributes = attributes
         self.settings = settings if settings is not None else {}
