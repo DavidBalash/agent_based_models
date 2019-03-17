@@ -140,7 +140,7 @@ if RUN_VOLATILITY:
               'Agent volatility over time')
 
     # Plot the agent score over time
-    line_plot(get_score_by_agent(model), 'time', 'score',
+    line_plot(find_values_by_agent(model, 'score'), 'time', 'score',
               'Agent score over time')
 
     plt.show()
@@ -151,10 +151,11 @@ else:
 
     display_ranking(model, all_rows=False)
 
-    line_plot(get_normalized_score_by_agent(model), 'time', 'normalized score',
-              'Scores over time')
+    line_plot(find_values_by_agent(model, 'normalized_score'), 'time',
+              'normalized score', 'Scores over time')
 
-    line_plot(get_score_by_agent(model), 'time', 'score', 'Scores over time')
+    line_plot(find_values_by_agent(model, 'score'), 'time', 'score',
+              'Scores over time')
 
     plt.show()
 

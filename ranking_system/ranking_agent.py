@@ -38,6 +38,9 @@ class RankingAgent(Agent):
         # Initialize the agent's normalized score.
         self.normalized_score = 0
 
+        # Spending on attributes
+        self.spending_on_attributes = []
+
         # Start with a certain amount of attributes.
         for attribute in self.model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
@@ -56,10 +59,13 @@ class RankingAgent(Agent):
     def _buy_attributes(self):
         """Buy attributes based on budget."""
 
+        self.spending_on_attributes = []
+
         # Randomly buy attributes.
         for attribute in self._inventory:
             capital_expenditure = self.random.uniform(0, self._budget)
             attribute.production_function(capital_expenditure, self.random)
+            self.spending_on_attributes.append(capital_expenditure)
             self._budget -= capital_expenditure
 
     def _increment_budget(self):

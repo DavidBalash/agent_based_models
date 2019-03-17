@@ -5,40 +5,22 @@ import pandas as pd
 from IPython.display import display
 
 
-def get_score_by_agent(model):
-    """Get the score by agent dictionary from the model.
+def find_values_by_agent(model, value):
+    """Find the values by agent dictionary from the model.
 
     :param model: The ranking model.
-    :return: The score by agent dictionary.
+    :param value: The value to find.
+    :return: The values by agent dictionary.
     """
 
-    agent_vars_df = model.data_collector.get_agent_vars_dataframe()
-    score_by_agent = {}
-
-    for agent, data_frame in agent_vars_df.groupby('AgentID'):
-        score_by_agent[agent] = [None]
+    ranking = model.data_collector.get_table_dataframe('ranking')
+    normalized_score_by_agent = {}
+    for agent, data_frame in ranking.groupby('element'):
+        normalized_score_by_agent[agent] = [None]
         for _, row in data_frame.iterrows():
-            score_by_agent[agent].append(row.score)
+            normalized_score_by_agent[agent].append(row[value])
 
-    return score_by_agent
-
-
-def get_normalized_score_by_agent(model):
-    """Get the normalized score by agent dictionary from the model.
-
-    :param model: The ranking model.
-    :return: The normalized score by agent dictionary.
-    """
-
-    agent_vars_df = model.data_collector.get_agent_vars_dataframe()
-    score_by_agent = {}
-
-    for agent, data_frame in agent_vars_df.groupby('AgentID'):
-        score_by_agent[agent] = [None]
-        for _, row in data_frame.iterrows():
-            score_by_agent[agent].append(row.normalized_score)
-
-    return score_by_agent
+    return normalized_score_by_agent
 
 
 def display_ranking(model, max_rows=None, all_rows=False):
@@ -50,7 +32,8 @@ def display_ranking(model, max_rows=None, all_rows=False):
     """
     ranking = model.data_collector.get_table_dataframe('ranking')
     ranking.columns = ['University', 'Time', 'Rank', 'Score',
-                       'Normalized Score']
+                       'Normalized Score', 'Funding 1',
+                       'Funding 2']
     if all_rows:
         display(ranking)
     elif max_rows is not None:

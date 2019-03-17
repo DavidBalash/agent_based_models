@@ -52,7 +52,8 @@ class RankingModel(Model):
         self.data_collector = DataCollector(
             # A model attribute
             tables={"ranking": ["element", "period", "position", "score",
-                                "normalized_score"]},
+                                "normalized_score", "funding_1",
+                                "funding_2"]},
             # An agent attribute
             agent_reporters={"score": "score",
                              "normalized_score": "normalized_score"})
@@ -104,18 +105,19 @@ class RankingModel(Model):
 
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
-
+        columns = ['element', 'period', 'score', 'normalized_score',
+                   'funding_1', 'funding_2']
         agent_scores = []
         for agent in self.agents:
-            agent.normalized_score = self._normalize_score(agent.score)
-            agent_scores.append([agent.unique_id,
-                                 self.schedule.time,
-                                 round(agent.score, self.DECIMAL_PLACES),
-                                 agent.normalized_score])
+            scores = [agent.unique_id, self.schedule.time,
+                      round(agent.score, self.DECIMAL_PLACES),
+                      self._normalize_score(agent.score)]
+            for index, spending in enumerate(agent.spending_on_attributes):
+                scores.append(round(spending, self.DECIMAL_PLACES))
 
-        agent_rank = pd.DataFrame(agent_scores,
-                                  columns=['element', 'period', 'score',
-                                           'normalized_score'])
+            agent_scores.append(scores)
+
+        agent_rank = pd.DataFrame(agent_scores, columns=columns)
 
         # Use pandas data frame to rank the agents.
         agent_rank['position'] =\
