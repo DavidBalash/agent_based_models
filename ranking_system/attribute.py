@@ -28,17 +28,32 @@ class Attribute:
         self._weightage_function = weightage_function
         self._production_function = production_function
 
-    def production_function(self, dollars, random):
-        self._value = self._production_function(dollars, random)
+    def production(self, funding_allocated, random):
+        """The production function for this attribute.
 
-    def valuation(self, time_step):
-        """The value of this attribute in the ranking.
+        :param funding_allocated: Funds allocated to producing the attribute.
+        :param random: A random number generator.
+        :return: The amount of the attribute produced given the funds allocated.
+        """
+        amount_produced = self._production_function(funding_allocated, random)
+        self._value = amount_produced
+        return amount_produced
 
-        :param time_step: The current time step t.
+    def valuation(self):
+        """The true value of this attribute.
+
+        :return: The valuation function applied to the current attribute value.
         """
 
-        return (self._valuation_function(self._value)
-                * self._weightage_function(time_step))
+        return self._valuation_function(self._value)
+
+    def weightage(self, time_step):
+        """The weight given to this attribute in the ranking at this time step.
+
+        :param time_step: The current time step.
+        :return: The weightage for this attribute at this time step.
+        """
+        return self._weightage_function(time_step)
 
 # Agent based models
 # Copyright (C) 2019 David Balash

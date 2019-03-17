@@ -31,9 +31,19 @@ def display_ranking(model, max_rows=None, all_rows=False):
     :param all_rows: All rows boolean flag.
     """
     ranking = model.data_collector.get_table_dataframe('ranking')
-    ranking.columns = ['University', 'Time', 'Rank', 'Score',
-                       'Normalized Score', 'Funding 1',
-                       'Funding 2']
+    ranking_columns = ['University', 'Time', 'Rank', 'Score',
+                       'Normalized Score']
+
+    # Add attribute related columns
+    for i in range(1, len(model.attributes) + 1):
+        ranking_columns.append('Funding {}'.format(i))
+        ranking_columns.append('Production {}'.format(i))
+        ranking_columns.append('Valuation {}'.format(i))
+        ranking_columns.append('Weight {}'.format(i))
+        ranking_columns.append('Score {}'.format(i))
+
+    ranking.columns = ranking_columns
+
     if all_rows:
         display(ranking)
     elif max_rows is not None:

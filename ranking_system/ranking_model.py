@@ -48,15 +48,28 @@ class RankingModel(Model):
             self.agents.append(agent)
             self.schedule.add(agent)
 
+        self.rank_columns = ['element', 'period', 'position', 'score',
+                             'normalized_score']
+
+        # Add attribute related columns
+        for i in range(1, len(self.attributes) + 1):
+            self.rank_columns.append('funding_{}'.format(i))
+            self.rank_columns.append('production_{}'.format(i))
+            self.rank_columns.append('valuation_{}'.format(i))
+            self.rank_columns.append('weight_{}'.format(i))
+            self.rank_columns.append('score_{}'.format(i))
+
         # Setup a data collector
         self.data_collector = DataCollector(
             # A model attribute
-            tables={"ranking": ["element", "period", "position", "score",
-                                "normalized_score", "funding_1",
-                                "funding_2"]},
+            tables={"ranking": self.rank_columns},
             # An agent attribute
             agent_reporters={"score": "score",
                              "normalized_score": "normalized_score"})
+
+        # Remove the position column since it will be added back during the
+        # update ranking process
+        self.rank_columns.remove('position')
 
     def run(self, number_of_steps):
         """Run the model for the input number of time steps.
@@ -105,19 +118,24 @@ class RankingModel(Model):
 
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
-        columns = ['element', 'period', 'score', 'normalized_score',
-                   'funding_1', 'funding_2']
         agent_scores = []
         for agent in self.agents:
             scores = [agent.unique_id, self.schedule.time,
                       round(agent.score, self.DECIMAL_PLACES),
                       self._normalize_score(agent.score)]
-            for index, spending in enumerate(agent.spending_on_attributes):
-                scores.append(round(spending, self.DECIMAL_PLACES))
+            for funds, produce, value, weight in zip(agent.attribute_funding,
+                                                     agent.attribute_production,
+                                                     agent.attribute_valuation,
+                                                     agent.attribute_weight):
+                scores.append(round(funds, self.DECIMAL_PLACES))
+                scores.append(round(produce, self.DECIMAL_PLACES))
+                scores.append(round(value, self.DECIMAL_PLACES))
+                scores.append(round(weight, self.DECIMAL_PLACES))
+                scores.append(round(value * weight, self.DECIMAL_PLACES))
 
             agent_scores.append(scores)
 
-        agent_rank = pd.DataFrame(agent_scores, columns=columns)
+        agent_rank = pd.DataFrame(agent_scores, columns=self.rank_columns)
 
         # Use pandas data frame to rank the agents.
         agent_rank['position'] =\

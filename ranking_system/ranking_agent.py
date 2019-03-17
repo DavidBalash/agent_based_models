@@ -38,8 +38,17 @@ class RankingAgent(Agent):
         # Initialize the agent's normalized score.
         self.normalized_score = 0
 
-        # Spending on attributes
-        self.spending_on_attributes = []
+        # Funding allocated to attributes
+        self.attribute_funding = []
+
+        # Production value of attributes
+        self.attribute_production = []
+
+        # Valuation of attributes
+        self.attribute_valuation = []
+
+        # Weight of attributes
+        self.attribute_weight = []
 
         # Start with a certain amount of attributes.
         for attribute in self.model.attributes:
@@ -59,13 +68,14 @@ class RankingAgent(Agent):
     def _buy_attributes(self):
         """Buy attributes based on budget."""
 
-        self.spending_on_attributes = []
+        self.attribute_funding = []
 
         # Randomly buy attributes.
         for attribute in self._inventory:
             capital_expenditure = self.random.uniform(0, self._budget)
-            attribute.production_function(capital_expenditure, self.random)
-            self.spending_on_attributes.append(capital_expenditure)
+            production = attribute.production(capital_expenditure, self.random)
+            self.attribute_production.append(production)
+            self.attribute_funding.append(capital_expenditure)
             self._budget -= capital_expenditure
 
     def _increment_budget(self):
@@ -80,9 +90,14 @@ class RankingAgent(Agent):
         # Reset the score
         self.score = 0
 
-        # For each item in inventory add the ranking value the score
+        # For each attribute in inventory add the attribute value times the
+        # attribute weight to the score
         for attribute in self._inventory:
-            self.score += attribute.valuation(self.model.schedule.time)
+            value = attribute.valuation()
+            self.attribute_valuation.append(value)
+            weight = attribute.weightage(self.model.schedule.time)
+            self.attribute_weight.append(weight)
+            self.score += value * weight
 
 # Agent based models
 # Copyright (C) 2019 David Balash
