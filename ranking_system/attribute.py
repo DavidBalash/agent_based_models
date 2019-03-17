@@ -11,12 +11,14 @@ __status__ = "Prototype"
 class Attribute:
     """The Attribute class."""
     def __init__(self, name, weightage_function, valuation_function,
-                 initial_value=0.0):
+                 production_function, initial_value=0.0):
         """Initialize the attribute.
 
         :param name: The name of the attribute.
         :param weightage_function: The weightage function used in ranking.
         :param valuation_function: The valuation function used in ranking.
+        :param production_function: The production function used to produce the
+                                    attribute.
         :param initial_value: The initial value. (default 0.0)
         """
 
@@ -24,31 +26,10 @@ class Attribute:
         self._value = initial_value
         self._valuation_function = valuation_function
         self._weightage_function = weightage_function
+        self._production_function = production_function
 
-    def simple_production_function(self, capital, alpha):
-        """The simple production function for this attribute.
-
-        :param capital: The input capital.
-        :param alpha: The input elasticity alpha.
-        """
-
-        self._value += capital ** alpha
-
-    # pylint: disable=too-many-arguments
-    def cobb_douglas_production_function(self, total_factor_productivity,
-                                         labor, capital, alpha, beta):
-        """The Cobb-Douglas production function for this attribute.
-
-        :param total_factor_productivity: The total-factor productivity (TFP).
-        :param labor: The input labor.
-        :param capital: The input capital.
-        :param alpha: The input elasticity alpha.
-        :param beta: The input elasticity beta.
-        """
-
-        self._value += (total_factor_productivity
-                        * (labor ** beta)
-                        * (capital ** alpha))
+    def production_function(self, dollars, random):
+        self._value = self._production_function(dollars, random)
 
     def valuation(self, time_step):
         """The value of this attribute in the ranking.

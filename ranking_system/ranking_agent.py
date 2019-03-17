@@ -24,10 +24,10 @@ class RankingAgent(Agent):
         self._alpha = self.random.random()
 
         # Initialize the agent's budget.
-        self._budget = self.random.uniform(50, 100)
+        self._budget = self.random.uniform(5_000, 15_000)
 
         # Initialize the random budget increment for this agent.
-        self._budget_step_increment_size = self.random.uniform(50, 100)
+        self._budget_step_increment_size = self.random.uniform(5_000, 15_000)
 
         # Initialize the agent's inventory.
         self._inventory = []
@@ -41,7 +41,6 @@ class RankingAgent(Agent):
         # Start with a certain amount of attributes.
         for attribute in self.model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
-            inventory_attribute.set_quantity(self.random.uniform(50, 75))
             self._inventory.append(inventory_attribute)
 
     def step(self):
@@ -60,8 +59,7 @@ class RankingAgent(Agent):
         # Randomly buy attributes.
         for attribute in self._inventory:
             capital_expenditure = self.random.uniform(0, self._budget)
-            attribute.simple_production_function(capital_expenditure,
-                                                 self.random.random())
+            attribute.production_function(capital_expenditure, self.random)
             self._budget -= capital_expenditure
 
     def _increment_budget(self):
