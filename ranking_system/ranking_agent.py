@@ -24,10 +24,8 @@ class RankingAgent(Agent):
         self._alpha = self.random.random()
 
         # Initialize the agent's budget.
-        self._budget = self.random.uniform(5_000, 15_000)
-
-        # Initialize the random budget increment for this agent.
-        self._budget_step_increment_size = self.random.uniform(5_000, 15_000)
+        self._budget = self.random.uniform(model.settings['expenditure_min'],
+                                           model.settings['expenditure_max'])
 
         # Initialize the agent's inventory.
         self._inventory = []
@@ -51,7 +49,7 @@ class RankingAgent(Agent):
         self.attribute_weight = {}
 
         # Start with a certain amount of attributes.
-        for attribute in self.model.attributes:
+        for attribute in model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
             self._inventory.append(inventory_attribute)
             self.attribute_funding[attribute.name] = []
@@ -84,7 +82,9 @@ class RankingAgent(Agent):
         """Increment the budget based on the income per time step."""
 
         # Add the income for this step to the budget.
-        self._budget += self._budget_step_increment_size
+        increment = self.random.uniform(self.model.settings['expenditure_min'],
+                                        self.model.settings['expenditure_max'])
+        self._budget += increment
 
     def _calculate_score(self):
         """Calculate the agent's current score based on inventory."""

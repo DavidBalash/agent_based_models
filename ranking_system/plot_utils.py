@@ -24,6 +24,21 @@ def find_values_by_agent(model, table_name, value):
     return value_by_agent
 
 
+def table_column_to_list(model, table_name, column_name, start_at_one=True):
+    """Get a column from a table as a list.
+
+    :param model: The model where the table resides.
+    :param table_name: The name of the table.
+    :param column_name: The name of the column to convert to a list.
+    :param start_at_one: If true start the list from index 1.
+    :return: Table column as a list.
+    """
+
+    table = model.data_collector.get_table_dataframe(table_name)
+    column_as_list = table[column_name].tolist()
+    return [None] + column_as_list if start_at_one else column_as_list
+
+
 def display_ranking(model, max_rows=None, all_rows=False):
     """Display the ranking data frame.
 
@@ -64,6 +79,31 @@ def display_attribute(model, attribute_name, max_rows=None, all_rows=False):
     else:
         with pd.option_context('display.max_rows', len(model.agents) * 4):
             display(attributes)
+
+
+def display_societal_value(model, max_rows=None, all_rows=False):
+    """Display the societal value data frame.
+
+    :param model: The model with attributes to display.
+    :param max_rows: The maximum number of rows to display.
+    :param all_rows: All rows boolean flag.
+    """
+    societal_values = model.data_collector.get_table_dataframe('societal_value')
+    societal_values.columns = ['Time', 'Societal Value']
+
+    societal_values.loc['Total', 'Time'] = ''
+
+    societal_values.loc['Total', 'Societal Value'] =\
+        round(societal_values['Societal Value'].sum(), model.DECIMAL_PLACES)
+
+    if all_rows:
+        display(societal_values)
+    elif max_rows is not None:
+        with pd.option_context('display.max_rows', max_rows):
+            display(societal_values)
+    else:
+        with pd.option_context('display.max_rows', len(model.agents) * 4):
+            display(societal_values)
 
 
 # pylint: disable=too-many-arguments

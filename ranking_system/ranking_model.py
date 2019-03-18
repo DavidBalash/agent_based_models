@@ -21,14 +21,14 @@ class RankingModel(Model):
 
     NORMALIZED_SCORE_RANGE = [0, 100]
 
-    def __init__(self, number_of_agents, attributes, random_seed=None,
-                 settings=None):
+    def __init__(self, number_of_agents, attributes, settings=None,
+                 random_seed=None):
         """Constructor for the RankingModel class.
 
         :param number_of_agents: The number of agents.
         :param attributes: The list of attributes.
-        :param random_seed: The seed for the random number generator.
         :param settings: The settings dictionary.
+        :param random_seed: The seed for the random number generator.
         """
 
         super().__init__()
@@ -52,12 +52,16 @@ class RankingModel(Model):
         self.rank_columns = ['element', 'period', 'position', 'score',
                              'normalized_score']
 
+        # Columns used in the societal value table.
+        self.societal_value_columns = ['period', 'societal_value']
+
         # Columns used in the attribute tables.
         self.attribute_columns = ['element', 'period', 'funding', 'production',
                                   'valuation', 'weight', 'score']
 
         # Setup tables to add to the data collector
-        tables = {'ranking': self.rank_columns}
+        tables = {'ranking': self.rank_columns,
+                  'societal_value': self.societal_value_columns}
 
         # Add a table per attribute
         for index, attribute in enumerate(self.attributes):
@@ -88,6 +92,9 @@ class RankingModel(Model):
 
         # Update the agent ranking
         self._update_ranking()
+
+        # Update the societal value table
+        self._update_societal_value()
 
         # Collect data.
         self.data_collector.collect(self)
@@ -154,6 +161,22 @@ class RankingModel(Model):
                                            columns=self.attribute_columns)
             for row in attribute_score.to_dict('records'):
                 self.data_collector.add_table_row(attribute.name, row)
+
+    def _update_societal_value(self):
+        """Update the societal value table."""
+
+        sum_production_values = 0
+        for agent in self.agents:
+            for index, attribute in enumerate(self.attributes):
+                step_index = self.schedule.time - 1
+                produce = agent.attribute_production[attribute.name][step_index]
+                sum_production_values += produce
+
+        societal_value_row = {'period': self.schedule.time,
+                              'societal_value': round(sum_production_values,
+                                                      self.DECIMAL_PLACES)}
+        self.data_collector.add_table_row('societal_value', societal_value_row)
+
 
 # Agent based models
 # Copyright (C) 2019 David Balash

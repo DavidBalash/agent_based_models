@@ -108,7 +108,8 @@ attributes = [Attribute('Average Spending Per Student',
                         valuation_average_class_size,
                         production_average_class_size)]
 
-model = RankingModel(number_of_agents, attributes)
+settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
+model = RankingModel(number_of_agents, attributes, settings)
 
 if RUN_VOLATILITY:
     normalized_mean_strengths = [None, None]
@@ -166,6 +167,11 @@ else:
                                    'funding'),
               'time', 'funding',
               'Average spending per student funding over time')
+
+    display_societal_value(model, all_rows=False)
+
+    line_plot(table_column_to_list(model, 'societal_value', 'societal_value'),
+              'time', 'societal value', 'Societal value over time')
 
     plt.show()
 
