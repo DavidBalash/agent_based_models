@@ -5,22 +5,23 @@ import pandas as pd
 from IPython.display import display
 
 
-def find_values_by_agent(model, value):
+def find_values_by_agent(model, table_name, value):
     """Find the values by agent dictionary from the model.
 
     :param model: The ranking model.
+    :param table_name: The table used to find the values.
     :param value: The value to find.
     :return: The values by agent dictionary.
     """
 
-    ranking = model.data_collector.get_table_dataframe('ranking')
-    normalized_score_by_agent = {}
+    ranking = model.data_collector.get_table_dataframe(table_name)
+    value_by_agent = {}
     for agent, data_frame in ranking.groupby('element'):
-        normalized_score_by_agent[agent] = [None]
+        value_by_agent[agent] = [None]
         for _, row in data_frame.iterrows():
-            normalized_score_by_agent[agent].append(row[value])
+            value_by_agent[agent].append(row[value])
 
-    return normalized_score_by_agent
+    return value_by_agent
 
 
 def display_ranking(model, max_rows=None, all_rows=False):
@@ -44,28 +45,25 @@ def display_ranking(model, max_rows=None, all_rows=False):
             display(ranking)
 
 
-def display_attributes(model, max_rows=None, all_rows=False):
-    """Display the attributes data frames.
+def display_attribute(model, attribute_name, max_rows=None, all_rows=False):
+    """Display the attribute data frame.
 
     :param model: The model with attributes to display.
+    :param attribute_name: The name of the attribute to display.
     :param max_rows: The maximum number of rows to display.
     :param all_rows: All rows boolean flag.
     """
-    # Add attribute related columns
-    for index, _ in enumerate(model.attributes):
-        attributes = model.data_collector.get_table_dataframe('attribute{}'.
-                                                              format(index))
-        attributes.columns = ['University', 'Time', 'Funding', 'Production',
-                              'Valuation', 'Weight', 'Score']
-        attributes.name = 'Attribute {}'.format(index)
-        if all_rows:
+    attributes = model.data_collector.get_table_dataframe(attribute_name)
+    attributes.columns = ['University', 'Time', 'Funding', 'Production',
+                          'Valuation', 'Weight', 'Score']
+    if all_rows:
+        display(attributes)
+    elif max_rows is not None:
+        with pd.option_context('display.max_rows', max_rows):
             display(attributes)
-        elif max_rows is not None:
-            with pd.option_context('display.max_rows', max_rows):
-                display(attributes)
-        else:
-            with pd.option_context('display.max_rows', len(model.agents) * 4):
-                display(attributes)
+    else:
+        with pd.option_context('display.max_rows', len(model.agents) * 4):
+            display(attributes)
 
 
 # pylint: disable=too-many-arguments

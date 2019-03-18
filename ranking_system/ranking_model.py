@@ -60,8 +60,8 @@ class RankingModel(Model):
         tables = {'ranking': self.rank_columns}
 
         # Add a table per attribute
-        for index, _ in enumerate(self.attributes):
-            tables['attribute{}'.format(index)] = self.attribute_columns
+        for index, attribute in enumerate(self.attributes):
+            tables[attribute.name] = self.attribute_columns
 
         # Setup a data collector
         self.data_collector = DataCollector(tables=tables)
@@ -149,12 +149,11 @@ class RankingModel(Model):
             self.data_collector.add_table_row('ranking', row)
 
         # Add a table per attribute
-        for index, _ in enumerate(self.attributes):
+        for index, attribute in enumerate(self.attributes):
             attribute_score = pd.DataFrame(attribute_scores[index],
                                            columns=self.attribute_columns)
             for row in attribute_score.to_dict('records'):
-                self.data_collector.add_table_row('attribute{}'.format(index),
-                                                  row)
+                self.data_collector.add_table_row(attribute.name, row)
 
 # Agent based models
 # Copyright (C) 2019 David Balash

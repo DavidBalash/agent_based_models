@@ -140,7 +140,7 @@ if RUN_VOLATILITY:
               'Agent volatility over time')
 
     # Plot the agent score over time
-    line_plot(find_values_by_agent(model, 'score'), 'time', 'score',
+    line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time', 'score',
               'Agent score over time')
 
     plt.show()
@@ -151,13 +151,21 @@ else:
 
     display_ranking(model, all_rows=False)
 
-    display_attributes(model, all_rows=False)
+    display_attribute(model, 'Average Spending Per Student', all_rows=False)
 
-    line_plot(find_values_by_agent(model, 'normalized_score'), 'time',
-              'normalized score', 'Scores over time')
+    display_attribute(model, 'Average Class Size', all_rows=False)
 
-    line_plot(find_values_by_agent(model, 'score'), 'time', 'score',
+    line_plot(find_values_by_agent(model, 'ranking', 'normalized_score'),
+              'time', 'normalized score', 'Scores over time')
+
+    line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time', 'score',
               'Scores over time')
+
+    # Plot the attribute funding over time
+    line_plot(find_values_by_agent(model, 'Average Spending Per Student',
+                                   'funding'),
+              'time', 'funding',
+              'Average spending per student funding over time')
 
     plt.show()
 
