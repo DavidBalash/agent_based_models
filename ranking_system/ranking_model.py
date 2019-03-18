@@ -125,12 +125,12 @@ class RankingModel(Model):
             agent_scores.append([agent.unique_id, self.schedule.time,
                                  round(agent.score, self.DECIMAL_PLACES),
                                  self._normalize_score(agent.score)])
-            for (index, _), funds, produce, value, weight\
-                    in zip(enumerate(self.attributes),
-                           agent.attribute_funding,
-                           agent.attribute_production,
-                           agent.attribute_valuation,
-                           agent.attribute_weight):
+            for index, attribute in enumerate(self.attributes):
+                step_index = self.schedule.time - 1
+                funds = agent.attribute_funding[attribute.name][step_index]
+                produce = agent.attribute_production[attribute.name][step_index]
+                value = agent.attribute_valuation[attribute.name][step_index]
+                weight = agent.attribute_weight[attribute.name][step_index]
                 attributes = [agent.unique_id, self.schedule.time,
                               round(funds, self.DECIMAL_PLACES),
                               round(produce, self.DECIMAL_PLACES),

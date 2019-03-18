@@ -37,10 +37,10 @@ def valuation_average_spending_per_student(average_spending_per_student):
     elif average_spending_per_student > 7_500:
         # Spending between 7,500 and 10,000 per student scores second highest
         return 75
-    elif average_spending_per_student < 5_000:
+    elif average_spending_per_student > 5_000:
         # Spending between 5,000 and 7,500 per student scores third highest
         return 50
-    elif average_spending_per_student < 2_500:
+    elif average_spending_per_student > 2_500:
         # Spending between 2,500 and 5,000 per student scores fourth highest
         return 25
     else:

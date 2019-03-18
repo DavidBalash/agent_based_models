@@ -39,21 +39,25 @@ class RankingAgent(Agent):
         self.normalized_score = 0
 
         # Funding allocated to attributes
-        self.attribute_funding = []
+        self.attribute_funding = {}
 
         # Production value of attributes
-        self.attribute_production = []
+        self.attribute_production = {}
 
         # Valuation of attributes
-        self.attribute_valuation = []
+        self.attribute_valuation = {}
 
         # Weight of attributes
-        self.attribute_weight = []
+        self.attribute_weight = {}
 
         # Start with a certain amount of attributes.
         for attribute in self.model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
             self._inventory.append(inventory_attribute)
+            self.attribute_funding[attribute.name] = []
+            self.attribute_production[attribute.name] = []
+            self.attribute_valuation[attribute.name] = []
+            self.attribute_weight[attribute.name] = []
 
     def step(self):
         """The agent's step method.
@@ -68,15 +72,13 @@ class RankingAgent(Agent):
     def _buy_attributes(self):
         """Buy attributes based on budget."""
 
-        self.attribute_funding = []
-
-        # Randomly buy attributes.
+        # Randomly allocate funding to attributes.
         for attribute in self._inventory:
-            capital_expenditure = self.random.uniform(0, self._budget)
-            production = attribute.production(capital_expenditure, self.random)
-            self.attribute_production.append(production)
-            self.attribute_funding.append(capital_expenditure)
-            self._budget -= capital_expenditure
+            funding_allocated = self.random.uniform(0, self._budget)
+            self.attribute_funding[attribute.name].append(funding_allocated)
+            production = attribute.production(funding_allocated, self.random)
+            self.attribute_production[attribute.name].append(production)
+            self._budget -= funding_allocated
 
     def _increment_budget(self):
         """Increment the budget based on the income per time step."""
@@ -94,9 +96,9 @@ class RankingAgent(Agent):
         # attribute weight to the score
         for attribute in self._inventory:
             value = attribute.valuation()
-            self.attribute_valuation.append(value)
+            self.attribute_valuation[attribute.name].append(value)
             weight = attribute.weightage(self.model.schedule.time)
-            self.attribute_weight.append(weight)
+            self.attribute_weight[attribute.name].append(weight)
             self.score += value * weight
 
 # Agent based models
