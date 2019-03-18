@@ -151,6 +151,8 @@ else:
 
     display_ranking(model, all_rows=False)
 
+    display_attributes(model, all_rows=False)
+
     line_plot(find_values_by_agent(model, 'normalized_score'), 'time',
               'normalized score', 'Scores over time')
 

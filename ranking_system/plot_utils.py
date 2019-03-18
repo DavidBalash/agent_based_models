@@ -31,18 +31,8 @@ def display_ranking(model, max_rows=None, all_rows=False):
     :param all_rows: All rows boolean flag.
     """
     ranking = model.data_collector.get_table_dataframe('ranking')
-    ranking_columns = ['University', 'Time', 'Rank', 'Score',
+    ranking.columns = ['University', 'Time', 'Rank', 'Score',
                        'Normalized Score']
-
-    # Add attribute related columns
-    for i in range(1, len(model.attributes) + 1):
-        ranking_columns.append('Funding {}'.format(i))
-        ranking_columns.append('Production {}'.format(i))
-        ranking_columns.append('Valuation {}'.format(i))
-        ranking_columns.append('Weight {}'.format(i))
-        ranking_columns.append('Score {}'.format(i))
-
-    ranking.columns = ranking_columns
 
     if all_rows:
         display(ranking)
@@ -52,6 +42,30 @@ def display_ranking(model, max_rows=None, all_rows=False):
     else:
         with pd.option_context('display.max_rows', len(model.agents) * 4):
             display(ranking)
+
+
+def display_attributes(model, max_rows=None, all_rows=False):
+    """Display the attributes data frames.
+
+    :param model: The model with attributes to display.
+    :param max_rows: The maximum number of rows to display.
+    :param all_rows: All rows boolean flag.
+    """
+    # Add attribute related columns
+    for index, _ in enumerate(model.attributes):
+        attributes = model.data_collector.get_table_dataframe('attribute{}'.
+                                                              format(index))
+        attributes.columns = ['University', 'Time', 'Funding', 'Production',
+                              'Valuation', 'Weight', 'Score']
+        attributes.name = 'Attribute {}'.format(index)
+        if all_rows:
+            display(attributes)
+        elif max_rows is not None:
+            with pd.option_context('display.max_rows', max_rows):
+                display(attributes)
+        else:
+            with pd.option_context('display.max_rows', len(model.agents) * 4):
+                display(attributes)
 
 
 # pylint: disable=too-many-arguments

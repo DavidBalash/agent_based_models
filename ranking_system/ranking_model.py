@@ -48,24 +48,23 @@ class RankingModel(Model):
             self.agents.append(agent)
             self.schedule.add(agent)
 
+        # Columns used in the ranking table.
         self.rank_columns = ['element', 'period', 'position', 'score',
                              'normalized_score']
 
-        # Add attribute related columns
-        for i in range(1, len(self.attributes) + 1):
-            self.rank_columns.append('funding_{}'.format(i))
-            self.rank_columns.append('production_{}'.format(i))
-            self.rank_columns.append('valuation_{}'.format(i))
-            self.rank_columns.append('weight_{}'.format(i))
-            self.rank_columns.append('score_{}'.format(i))
+        # Columns used in the attribute tables.
+        self.attribute_columns = ['element', 'period', 'funding', 'production',
+                                  'valuation', 'weight', 'score']
+
+        # Setup tables to add to the data collector
+        tables = {'ranking': self.rank_columns}
+
+        # Add a table per attribute
+        for index, _ in enumerate(self.attributes):
+            tables['attribute{}'.format(index)] = self.attribute_columns
 
         # Setup a data collector
-        self.data_collector = DataCollector(
-            # A model attribute
-            tables={"ranking": self.rank_columns},
-            # An agent attribute
-            agent_reporters={"score": "score",
-                             "normalized_score": "normalized_score"})
+        self.data_collector = DataCollector(tables=tables)
 
         # Remove the position column since it will be added back during the
         # update ranking process
@@ -118,22 +117,27 @@ class RankingModel(Model):
 
     def _update_ranking(self):
         """Update the agent's ranking based on agent score."""
+        attribute_scores = []
+        for index, _ in enumerate(self.attributes):
+            attribute_scores.append([])
         agent_scores = []
         for agent in self.agents:
-            scores = [agent.unique_id, self.schedule.time,
-                      round(agent.score, self.DECIMAL_PLACES),
-                      self._normalize_score(agent.score)]
-            for funds, produce, value, weight in zip(agent.attribute_funding,
-                                                     agent.attribute_production,
-                                                     agent.attribute_valuation,
-                                                     agent.attribute_weight):
-                scores.append(round(funds, self.DECIMAL_PLACES))
-                scores.append(round(produce, self.DECIMAL_PLACES))
-                scores.append(round(value, self.DECIMAL_PLACES))
-                scores.append(round(weight, self.DECIMAL_PLACES))
-                scores.append(round(value * weight, self.DECIMAL_PLACES))
-
-            agent_scores.append(scores)
+            agent_scores.append([agent.unique_id, self.schedule.time,
+                                 round(agent.score, self.DECIMAL_PLACES),
+                                 self._normalize_score(agent.score)])
+            for (index, _), funds, produce, value, weight\
+                    in zip(enumerate(self.attributes),
+                           agent.attribute_funding,
+                           agent.attribute_production,
+                           agent.attribute_valuation,
+                           agent.attribute_weight):
+                attributes = [agent.unique_id, self.schedule.time,
+                              round(funds, self.DECIMAL_PLACES),
+                              round(produce, self.DECIMAL_PLACES),
+                              round(value, self.DECIMAL_PLACES),
+                              round(weight, self.DECIMAL_PLACES),
+                              round(value * weight, self.DECIMAL_PLACES)]
+                attribute_scores[index].append(attributes)
 
         agent_rank = pd.DataFrame(agent_scores, columns=self.rank_columns)
 
@@ -142,7 +146,15 @@ class RankingModel(Model):
             agent_rank['score'].rank(method='min', ascending=False).astype(int)
 
         for row in agent_rank.to_dict('records'):
-            self.data_collector.add_table_row("ranking", row)
+            self.data_collector.add_table_row('ranking', row)
+
+        # Add a table per attribute
+        for index, _ in enumerate(self.attributes):
+            attribute_score = pd.DataFrame(attribute_scores[index],
+                                           columns=self.attribute_columns)
+            for row in attribute_score.to_dict('records'):
+                self.data_collector.add_table_row('attribute{}'.format(index),
+                                                  row)
 
 # Agent based models
 # Copyright (C) 2019 David Balash
