@@ -68,30 +68,31 @@ def valuation_average_class_size(average_class_size):
         return 0
 
 
-def production_average_spending_per_student(dollars, random):
+def production_average_spending_per_student(dollars, production_efficiency):
     """Production function for the average spending per student attribute"""
     # Educational: spending on instruction, research, and student services
     # Non-educational: spending on sports, dorms, and hospitals
     # Universities will differ in the percentage of dollars spent on educational
     # versus non-educational resources.
     # The educational spending percentage may change from year to year.
-    educational_spending_percentage = random.uniform(0.5, 1)
+    educational_spending_percentage = production_efficiency
     return dollars * educational_spending_percentage
 
 
-def production_average_class_size(dollars, random):
+def production_average_class_size(dollars, production_efficiency):
     """Production function for the average class size attribute"""
-    if dollars > random.uniform(9_000, 10_000):
+    class_size_dollars = dollars * production_efficiency
+    if class_size_dollars > 10_000:
         return 10
-    elif dollars > random.uniform(6_000, 9_000):
+    elif class_size_dollars > 9_000:
         return 20
-    elif dollars > random.uniform(3_000, 6_000):
+    elif class_size_dollars > 6_000:
         return 30
-    elif dollars > random.uniform(2_000, 3_000):
+    elif class_size_dollars > 3_000:
         return 40
-    elif dollars > random.uniform(1_000, 2_000):
+    elif class_size_dollars > 2_000:
         return 50
-    elif dollars > random.uniform(500, 1_000):
+    elif class_size_dollars > 1_000:
         return 100
     else:
         return 200
@@ -102,7 +103,8 @@ def production_average_class_size(dollars, random):
 attributes = [Attribute('Average Spending Per Student',
                         weightage_average_spending_per_student,
                         valuation_average_spending_per_student,
-                        production_average_spending_per_student),
+                        production_average_spending_per_student,
+                        ),
               Attribute('Average Class Size',
                         weightage_average_class_size,
                         valuation_average_class_size,

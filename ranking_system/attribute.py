@@ -23,29 +23,30 @@ class Attribute:
         """
 
         self.name = name
-        self._value = initial_value
+        self.value = initial_value
         self._valuation_function = valuation_function
         self._weightage_function = weightage_function
         self._production_function = production_function
 
-    def production(self, funding_allocated, random):
+    def production(self, funding_allocated, production_efficiency):
         """The production function for this attribute.
 
         :param funding_allocated: Funds allocated to producing the attribute.
-        :param random: A random number generator.
+        :param production_efficiency: Percent efficiency between [0, 1).
         :return: The amount of the attribute produced given the funds allocated.
         """
-        amount_produced = self._production_function(funding_allocated, random)
-        self._value = amount_produced
+        amount_produced = self._production_function(funding_allocated,
+                                                    production_efficiency)
         return amount_produced
 
-    def valuation(self):
+    def valuation(self, value):
         """The true value of this attribute.
 
-        :return: The valuation function applied to the current attribute value.
+        :param value: The value on which to obtain the valuation.
+        :return: The valuation function applied to the value.
         """
 
-        return self._valuation_function(self._value)
+        return self._valuation_function(value)
 
     def weightage(self, time_step):
         """The weight given to this attribute in the ranking at this time step.

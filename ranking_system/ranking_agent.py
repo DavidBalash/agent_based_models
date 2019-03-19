@@ -1,6 +1,8 @@
 """Ranking agent class file."""
 import copy
+import numpy as np
 from mesa import Agent
+from scipy.optimize import minimize
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -48,6 +50,9 @@ class RankingAgent(Agent):
         # Weight of attributes
         self.attribute_weight = {}
 
+        # The production efficiencies by attribute
+        self._production_efficiencies = {}
+
         # Start with a certain amount of attributes.
         for attribute in model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
@@ -56,6 +61,8 @@ class RankingAgent(Agent):
             self.attribute_production[attribute.name] = []
             self.attribute_valuation[attribute.name] = []
             self.attribute_weight[attribute.name] = []
+            self._production_efficiencies[attribute.name] =\
+                model.random.uniform(0.5, 1)
 
     def step(self):
         """The agent's step method.
@@ -67,16 +74,89 @@ class RankingAgent(Agent):
         self._increment_budget()
         self._calculate_score()
 
+    def _objective_function(self, variables):
+        """The objective function to be used in the optimization process.
+
+        :param variables: The variables used in the objective function.
+        :return: The result of applying the objective function to the variables.
+        """
+
+        print('variables = ', variables[0], variables[1])
+        # sum(weight * valuation(production))
+        attribute_scores = []
+        for index, attribute in enumerate(self._inventory):
+            weight = attribute.weightage(self.model.schedule.time)
+            print('weight = ', weight)
+            efficiency = self._production_efficiencies[attribute.name]
+            print('efficiency = ', efficiency)
+            print('variables[index] = ', variables[index])
+            production = attribute.production(variables[index], efficiency)
+            print('production = ', production)
+            valuation = attribute.valuation(production)
+            print('valuation = ', valuation)
+            score = weight * valuation
+            print('score = ', score)
+            attribute_scores.append(score)
+
+        # The sign of the return value must be negative because we are going
+        # to use the scipy minimize optimization function.
+        sign = -1
+        print('sum = ', sum(attribute_scores))
+        object_function_output = sign * sum(attribute_scores)
+        print('objection function output = ', object_function_output)
+        return object_function_output
+
+    def _constraint_function(self, variables):
+        """The constraint function to be used in the optimization process.
+
+        :param variables: The variables used in the constraint function.
+        :return: The constraint function.
+        """
+
+        # The constraint function should be negative when the constraint is
+        # violated. The sum of the amount allocated to each attribute should
+        # be less than the total budget.
+        return self._budget - sum(variables)
+
+    def _bounds(self):
+        """Get a list of bounds on to be used in the optimization process.
+
+        :return: List of bounds.
+        """
+
+        # The bounds on the variables which represent the amount allocated to a
+        # particular attribute should be between 0 and the total budget.
+        bounds = []
+        for _ in self._inventory:
+            bounds.append([0, self._budget])
+        return bounds
+
+    def _optimize_attribute_mix(self):
+        """Optimize the attribute mix."""
+        # Minimize a scalar function of one or more variables using
+        # Sequential Least SQuares Programming (SLSQP).
+        solution = minimize(self._objective_function,
+                            np.array([self._budget / 2, self._budget / 2]),
+                            method='SLSQP',
+                            bounds=self._bounds(),
+                            constraints={'type': 'ineq',
+                                         'fun': self._constraint_function})
+        return solution.x
+
     def _buy_attributes(self):
         """Buy attributes based on budget."""
 
+        # Use optimization to determine funding allocation.
+        funding_allocation = self._optimize_attribute_mix()
+
         # Randomly allocate funding to attributes.
-        for attribute in self._inventory:
-            funding_allocated = self.random.uniform(0, self._budget)
-            self.attribute_funding[attribute.name].append(funding_allocated)
-            production = attribute.production(funding_allocated, self.random)
-            self.attribute_production[attribute.name].append(production)
-            self._budget -= funding_allocated
+        for index, attribute in enumerate(self._inventory):
+            allocated_funds = funding_allocation[index]
+            self.attribute_funding[attribute.name].append(allocated_funds)
+            efficiency = self._production_efficiencies[attribute.name]
+            attribute.value = attribute.production(allocated_funds, efficiency)
+            self.attribute_production[attribute.name].append(attribute.value)
+            self._budget -= allocated_funds
 
     def _increment_budget(self):
         """Increment the budget based on the income per time step."""
@@ -95,7 +175,7 @@ class RankingAgent(Agent):
         # For each attribute in inventory add the attribute value times the
         # attribute weight to the score
         for attribute in self._inventory:
-            value = attribute.valuation()
+            value = attribute.valuation(attribute.value)
             self.attribute_valuation[attribute.name].append(value)
             weight = attribute.weightage(self.model.schedule.time)
             self.attribute_weight[attribute.name].append(weight)
