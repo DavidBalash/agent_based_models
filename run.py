@@ -168,10 +168,13 @@ else:
               'time', 'funding',
               'Average spending per student funding over time')
 
-    display_societal_value(model, all_rows=False)
+    display_societal_value(model, all_rows=True)
 
-    line_plot(table_column_to_list(model, 'societal_value', 'societal_value'),
-              'time', 'societal value', 'Societal value over time')
+    line_plot(table_column_to_list(model, 'societal_value', 'societal_value',
+                                   [None]), 'time', 'societal value',
+              'Societal value over time')
+
+    display_ranking_dynamics(model, all_rows=True)
 
     plt.show()
 

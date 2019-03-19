@@ -14,9 +14,9 @@ def find_values_by_agent(model, table_name, value):
     :return: The values by agent dictionary.
     """
 
-    ranking = model.data_collector.get_table_dataframe(table_name)
+    table = model.data_collector.get_table_dataframe(table_name)
     value_by_agent = {}
-    for agent, data_frame in ranking.groupby('element'):
+    for agent, data_frame in table.groupby('element'):
         value_by_agent[agent] = [None]
         for _, row in data_frame.iterrows():
             value_by_agent[agent].append(row[value])
@@ -24,19 +24,19 @@ def find_values_by_agent(model, table_name, value):
     return value_by_agent
 
 
-def table_column_to_list(model, table_name, column_name, start_at_one=True):
+def table_column_to_list(model, table_name, column_name, start_list=[]):
     """Get a column from a table as a list.
 
     :param model: The model where the table resides.
     :param table_name: The name of the table.
     :param column_name: The name of the column to convert to a list.
-    :param start_at_one: If true start the list from index 1.
+    :param start_list: Start the list that is returned with this list.
     :return: Table column as a list.
     """
 
     table = model.data_collector.get_table_dataframe(table_name)
     column_as_list = table[column_name].tolist()
-    return [None] + column_as_list if start_at_one else column_as_list
+    return start_list + column_as_list
 
 
 def display_ranking(model, max_rows=None, all_rows=False):
@@ -104,6 +104,27 @@ def display_societal_value(model, max_rows=None, all_rows=False):
     else:
         with pd.option_context('display.max_rows', len(model.agents) * 4):
             display(societal_values)
+
+
+def display_ranking_dynamics(model, max_rows=None, all_rows=False):
+    """Display the ranking dynamics data frame.
+
+    :param model: The model with table to display.
+    :param max_rows: The maximum number of rows to display.
+    :param all_rows: All rows boolean flag.
+    """
+    ranking_dynamics =\
+        model.data_collector.get_table_dataframe('ranking_dynamics')
+    ranking_dynamics.columns = ['Time', 'Distance', 'Society Value Change',
+                                'Gamma']
+    if all_rows:
+        display(ranking_dynamics)
+    elif max_rows is not None:
+        with pd.option_context('display.max_rows', max_rows):
+            display(ranking_dynamics)
+    else:
+        with pd.option_context('display.max_rows', len(model.agents) * 4):
+            display(ranking_dynamics)
 
 
 # pylint: disable=too-many-arguments

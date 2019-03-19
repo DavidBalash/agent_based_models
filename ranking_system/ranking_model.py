@@ -59,9 +59,14 @@ class RankingModel(Model):
         self.attribute_columns = ['element', 'period', 'funding', 'production',
                                   'valuation', 'weight', 'score']
 
+        # Columns used in the ranking_dynamics table.
+        self.ranking_dynamics_columns = ['period', 'distance', 'society_delta',
+                                         'gamma']
+
         # Setup tables to add to the data collector
         tables = {'ranking': self.rank_columns,
-                  'societal_value': self.societal_value_columns}
+                  'societal_value': self.societal_value_columns,
+                  'ranking_dynamics': self.ranking_dynamics_columns}
 
         # Add a table per attribute
         for index, attribute in enumerate(self.attributes):
@@ -95,6 +100,9 @@ class RankingModel(Model):
 
         # Update the societal value table
         self._update_societal_value()
+
+        # Update the ranking dynamics table
+        self._update_ranking_dynamics()
 
         # Collect data.
         self.data_collector.collect(self)
@@ -161,6 +169,45 @@ class RankingModel(Model):
                                            columns=self.attribute_columns)
             for row in attribute_score.to_dict('records'):
                 self.data_collector.add_table_row(attribute.name, row)
+
+    def _update_ranking_dynamics(self):
+        """Update the ranking dynamics table."""
+
+        if self.schedule.time < 2:
+            return
+
+        distance = 0
+
+        ranking = self.data_collector.get_table_dataframe('ranking')
+        for agent, data_frame in ranking.groupby('element'):
+            delta = 0
+            for _, row in data_frame.iterrows():
+                if row['period'] == self.schedule.time - 1:
+                    delta = row['position']
+                elif row['period'] == self.schedule.time:
+                    delta -= row['position']
+            if delta > 0:
+                distance += delta
+
+        society = self.data_collector.get_table_dataframe('societal_value')
+        society_t = 0
+        society_t_minus_one = 0
+        for _, row in society.iterrows():
+            if row['period'] == self.schedule.time - 1:
+                society_t_minus_one = row['societal_value']
+            elif row['period'] == self.schedule.time:
+                society_t = row['societal_value']
+
+        society_delta = society_t - society_t_minus_one
+
+        ranking_dynamics_row = {'period': self.schedule.time,
+                                'distance': distance,
+                                'society_delta': round(society_delta,
+                                                       self.DECIMAL_PLACES),
+                                'gamma': distance / society_delta}
+
+        self.data_collector.add_table_row('ranking_dynamics',
+                                          ranking_dynamics_row)
 
     def _update_societal_value(self):
         """Update the societal value table."""
