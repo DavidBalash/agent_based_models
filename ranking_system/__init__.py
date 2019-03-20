@@ -1,5 +1,6 @@
 """Ranking system package."""
 from .attribute import Attribute
+from .logging_utils import setup_logging
 from .plot_utils import dictionary_line_plot
 from .plot_utils import display_attribute
 from .plot_utils import display_ranking_dynamics
@@ -13,8 +14,8 @@ from .ranking_agent import RankingAgent
 from .ranking_dynamics_volatility import RankingDynamicsVolatility
 from .ranking_model import RankingModel
 
-__all__ = ["Attribute", "dictionary_line_plot", "display_attribute",
-           "display_ranking", "display_ranking_dynamics",
+__all__ = ["Attribute", "setup_logging", "dictionary_line_plot",
+           "display_attribute", "display_ranking", "display_ranking_dynamics",
            "display_societal_value", "find_values_by_agent", "line_plot",
            "list_line_plot", "table_column_to_list", "RankingAgent",
            "RankingDynamicsVolatility", "RankingModel"]

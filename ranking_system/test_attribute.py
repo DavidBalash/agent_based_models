@@ -9,44 +9,35 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
+def weightage_function_mock(t):
+    """Weightage function mock."""
+    return t
+
+
+def valuation_function_mock(value):
+    """Valuation function mock."""
+    return value
+
+
+def production_function_mock(dollars, production_efficiency):
+    """Production function mock."""
+    return dollars * production_efficiency
+
+
 # pylint: disable=protected-access
 class TestAttribute(unittest.TestCase):
     """Unit test class to test the Attribute class functions."""
 
-    def test_simple_production_function(self):
-        """Test the simple production function."""
-
-        capital = 4
-        alpha = 0.5
-        attribute = Attribute("attribute-1", 0.5)
-        attribute.simple_production_function(capital, alpha)
-        self.assertEqual(attribute._quantity, capital ** alpha,
-                         "Attribute quantity not correct.")
-
-    def test_cobb_douglas_production_function(self):
-        """Test the simple production function."""
-
-        capital = 4
-        labor = 9
-        alpha = 0.5
-        beta = 0.5
-        tfp = 1
-        ranking_weight = 0.5
-        attribute = Attribute("attribute-1", ranking_weight)
-        attribute.cobb_douglas_production_function(tfp, labor, capital, alpha, beta)
-        self.assertEqual(attribute._quantity,
-                         tfp * (labor ** beta) * (capital ** alpha),
-                         "Attribute quantity not correct.")
-
-    def test_valuation(self):
-        """Test the valuation function."""
-
-        initial_quantity = 10
-        ranking_weight = 0.5
-        attribute = Attribute("attribute-1", ranking_weight, initial_quantity)
-        self.assertEqual(attribute.valuation(),
-                         initial_quantity * ranking_weight,
-                         "Ranking value not correct.")
+    def test_init(self):
+        """Test the constructor function."""
+        attribute_name = 'Test Attribute'
+        attribute = Attribute(attribute_name, weightage_function_mock,
+                              valuation_function_mock, production_function_mock)
+        self.assertEqual(attribute.name, attribute_name,
+                         'Attribute name not correct.')
+        self.assertEqual(attribute._weightage_function.__name__,
+                         weightage_function_mock.__name__,
+                         'Weightage function name not correct.')
 
 
 if __name__ == '__main__':

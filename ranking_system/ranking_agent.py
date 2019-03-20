@@ -1,5 +1,6 @@
 """Ranking agent class file."""
 import copy
+import logging
 import numpy as np
 from mesa import Agent
 from scipy.optimize import minimize
@@ -9,6 +10,9 @@ __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
+
+
+LOGGER = logging.getLogger('ranking_system.ranking_agent')
 
 
 class RankingAgent(Agent):
@@ -77,34 +81,49 @@ class RankingAgent(Agent):
     def _objective_function(self, variables):
         """The objective function to be used in the optimization process.
 
+        This is the minus one times the sum(weight * valuation(production)) to
+        be used in minimization optimization calculation.
+
         :param variables: The variables used in the objective function.
         :return: The result of applying the objective function to the variables.
         """
 
-        print('variables = ', variables[0], variables[1])
-        # sum(weight * valuation(production))
+        LOGGER.debug('variables = {}'.format(variables))
+
+        # Calculate the the attribute scores.
         attribute_scores = []
         for index, attribute in enumerate(self._inventory):
+            # Get the weight for this attribute.
             weight = attribute.weightage(self.model.schedule.time)
-            print('weight = ', weight)
+            LOGGER.debug('weight = {}'.format(weight))
+
+            # Get the true value of this attribute from the production function.
             efficiency = self._production_efficiencies[attribute.name]
-            print('efficiency = ', efficiency)
-            print('variables[index] = ', variables[index])
             production = attribute.production(variables[index], efficiency)
-            print('production = ', production)
+            LOGGER.debug('efficiency = {}'.format(efficiency))
+            LOGGER.debug('variables[{}] = {}'.format(index, variables[index]))
+            LOGGER.debug('production = {}'.format(production))
+
+            # Get the valuation of the attribute from the valuation function.
             valuation = attribute.valuation(production)
-            print('valuation = ', valuation)
+            LOGGER.debug('valuation = {}'.format(valuation))
+
+            # Calculate the score of this attribute.
             score = weight * valuation
-            print('score = ', score)
+            LOGGER.debug('score = {}'.format(score))
+
+            # Append the score to the attribute scores list.
             attribute_scores.append(score)
 
         # The sign of the return value must be negative because we are going
         # to use the scipy minimize optimization function.
+        # sum(weight * valuation(production))
         sign = -1
-        print('sum = ', sum(attribute_scores))
-        object_function_output = sign * sum(attribute_scores)
-        print('objection function output = ', object_function_output)
-        return object_function_output
+        function_output = sign * sum(attribute_scores)
+        LOGGER.debug('sum = {}'.format(sum(attribute_scores)))
+        LOGGER.debug('objective function output = {}'.format(function_output))
+
+        return function_output
 
     def _constraint_function(self, variables):
         """The constraint function to be used in the optimization process.

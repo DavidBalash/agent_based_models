@@ -1,5 +1,6 @@
 """The Attribute class represents a purchasable attribute
    in the ranking system."""
+import logging
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -8,22 +9,28 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
+LOGGER = logging.getLogger('ranking_system.attribute')
+
+
 class Attribute:
     """The Attribute class."""
     def __init__(self, name, weightage_function, valuation_function,
-                 production_function, initial_value=0.0):
+                 production_function):
         """Initialize the attribute.
 
         :param name: The name of the attribute.
-        :param weightage_function: The weightage function used in ranking.
-        :param valuation_function: The valuation function used in ranking.
-        :param production_function: The production function used to produce the
-                                    attribute.
-        :param initial_value: The initial value. (default 0.0)
+        :param weightage_function: Function used to provide the ranking weight.
+        :param valuation_function: Function used to provide a valuation.
+        :param production_function: Function used to produce the attribute.
         """
 
+        LOGGER.debug('name = %s', name)
+        LOGGER.debug('weightage_function = %s', weightage_function.__name__)
+        LOGGER.debug('valuation_function = %s', valuation_function.__name__)
+        LOGGER.debug('production_function = %s', production_function.__name__)
+
         self.name = name
-        self.value = initial_value
+        self.value = 0
         self._valuation_function = valuation_function
         self._weightage_function = weightage_function
         self._production_function = production_function
@@ -35,8 +42,12 @@ class Attribute:
         :param production_efficiency: Percent efficiency between [0, 1).
         :return: The amount of the attribute produced given the funds allocated.
         """
+
+        LOGGER.debug('funding_allocated = %f', funding_allocated)
+        LOGGER.debug('production_efficiency = %f', production_efficiency)
         amount_produced = self._production_function(funding_allocated,
                                                     production_efficiency)
+        LOGGER.debug('amount_produced = %f', amount_produced)
         return amount_produced
 
     def valuation(self, value):
@@ -46,7 +57,10 @@ class Attribute:
         :return: The valuation function applied to the value.
         """
 
-        return self._valuation_function(value)
+        LOGGER.debug('value = %f', value)
+        valuation = self._valuation_function(value)
+        LOGGER.debug('valuation = %f', valuation)
+        return valuation
 
     def weightage(self, time_step):
         """The weight given to this attribute in the ranking at this time step.
@@ -54,7 +68,20 @@ class Attribute:
         :param time_step: The current time step.
         :return: The weightage for this attribute at this time step.
         """
-        return self._weightage_function(time_step)
+
+        LOGGER.debug('time_step = %f', time_step)
+        weight = self._weightage_function(time_step)
+        LOGGER.debug('weight = %f', weight)
+        return weight
+
+    def __repr__(self):
+        """The representation function will return the string representation.
+
+        :return: The string representation of the Attribute class.
+        """
+
+        return 'Attribute[name={}, value={}]'.format(self.name, self.value)
+
 
 # Agent based models
 # Copyright (C) 2019 David Balash

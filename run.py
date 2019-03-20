@@ -8,6 +8,9 @@ __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
 
+# Setup the logger
+setup_logging()
+
 RUN_VOLATILITY = False
 
 number_of_steps = 10

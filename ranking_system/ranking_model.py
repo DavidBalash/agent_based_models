@@ -1,4 +1,5 @@
 """The ranking model class file."""
+import logging.config
 import numpy as np
 import pandas as pd
 from mesa import Model
@@ -12,6 +13,9 @@ __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
+
+
+LOGGER = logging.getLogger('ranking_system.ranking_model')
 
 
 class RankingModel(Model):
@@ -32,6 +36,11 @@ class RankingModel(Model):
         """
 
         super().__init__()
+        LOGGER.debug('number_of_agents = {}'.format(number_of_agents))
+        LOGGER.debug('attributes = {}'.format(attributes))
+        LOGGER.debug('settings = {}'.format(settings))
+        LOGGER.debug('random_seed = {}'.format(random_seed))
+
         self.reset_randomizer(random_seed)
         self.agents = []
         self.attributes = attributes
