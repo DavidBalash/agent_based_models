@@ -1,5 +1,4 @@
 """Unit test for the Ranking Model class."""
-import logging
 import unittest
 from ranking_system import RankingModel
 from ranking_system import Attribute
@@ -11,14 +10,9 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
-logging.basicConfig(level=logging.INFO)
-LOGGER = logging.getLogger(__name__)
-
-
 def weightage_function_mock(time_step):
     """Weightage function mock."""
-    LOGGER.info('time_step = %f', time_step)
-    return 0.5
+    return [0.4, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5][time_step]
 
 
 def valuation_function_mock(value):
