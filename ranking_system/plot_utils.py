@@ -24,7 +24,7 @@ def find_values_by_agent(model, table_name, value):
     return value_by_agent
 
 
-def table_column_to_list(model, table_name, column_name, start_list=[]):
+def table_column_to_list(model, table_name, column_name, start_list=None):
     """Get a column from a table as a list.
 
     :param model: The model where the table resides.
@@ -34,8 +34,12 @@ def table_column_to_list(model, table_name, column_name, start_list=[]):
     :return: Table column as a list.
     """
 
+    if start_list is None:
+        start_list = []
+
     table = model.data_collector.get_table_dataframe(table_name)
     column_as_list = table[column_name].tolist()
+
     return start_list + column_as_list
 
 
@@ -46,6 +50,7 @@ def display_ranking(model, max_rows=None, all_rows=False):
     :param max_rows: The maximum number of rows to display.
     :param all_rows: All rows boolean flag.
     """
+
     ranking = model.data_collector.get_table_dataframe('ranking')
     ranking.columns = ['University', 'Time', 'Rank', 'Score',
                        'Normalized Score']
@@ -68,6 +73,7 @@ def display_attribute(model, attribute_name, max_rows=None, all_rows=False):
     :param max_rows: The maximum number of rows to display.
     :param all_rows: All rows boolean flag.
     """
+
     attributes = model.data_collector.get_table_dataframe(attribute_name)
     attributes.columns = ['University', 'Time', 'Funding', 'Production',
                           'Valuation', 'Weight', 'Score']
@@ -88,6 +94,7 @@ def display_societal_value(model, max_rows=None, all_rows=False):
     :param max_rows: The maximum number of rows to display.
     :param all_rows: All rows boolean flag.
     """
+
     societal_values = model.data_collector.get_table_dataframe('societal_value')
     societal_values.columns = ['Time', 'Societal Value']
 
@@ -113,6 +120,7 @@ def display_ranking_dynamics(model, max_rows=None, all_rows=False):
     :param max_rows: The maximum number of rows to display.
     :param all_rows: All rows boolean flag.
     """
+
     ranking_dynamics =\
         model.data_collector.get_table_dataframe('ranking_dynamics')
     ranking_dynamics.columns = ['Time', 'Distance', 'Society Value Change',
@@ -131,6 +139,7 @@ def display_ranking_dynamics(model, max_rows=None, all_rows=False):
 def line_plot(data, xlabel, ylabel, title, xlim_left=None, xlim_right=None,
               ylim_bottom=None, ylim_top=None):
     """Line plot function."""
+
     if isinstance(data, list):
         list_line_plot(data, xlabel, ylabel, title, xlim_left=xlim_left,
                        xlim_right=xlim_right, ylim_bottom=ylim_bottom,

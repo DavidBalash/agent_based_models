@@ -8,13 +8,17 @@ __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
 
+
 # Setup the logger
 setup_logging()
 
+# Run settings
 RUN_VOLATILITY = False
+DISPLAY_PLOTS = False
 
+# Model settings
 number_of_steps = 10
-number_of_agents = 5
+number_of_agents = 2
 
 
 # Create weightage functions that will return the weight used for time t
@@ -30,6 +34,9 @@ def weightage_average_class_size(t):
        Increases at time t greater than 5"""
     return 0.3 if t < 5 else 0.4
 
+
+# Create valuation functions
+# Return the true valuation of attribute i at time t
 
 def valuation_average_spending_per_student(average_spending_per_student):
     """Valuation given to the average spending per student attribute"""
@@ -70,6 +77,8 @@ def valuation_average_class_size(average_class_size):
         # Classes that are 50 or more students receive no credit
         return 0
 
+
+# Create production functions
 
 def production_average_spending_per_student(dollars, production_efficiency):
     """Production function for the average spending per student attribute"""
@@ -114,7 +123,7 @@ attributes = [Attribute('Average Spending Per Student',
                         production_average_class_size)]
 
 settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
-model = RankingModel(number_of_agents, attributes, settings)
+model = RankingModel(number_of_agents, attributes, settings, random_seed=12345)
 
 if RUN_VOLATILITY:
     normalized_mean_strengths = [None, None]
@@ -161,27 +170,31 @@ else:
 
     display_attribute(model, 'Average Class Size', all_rows=False)
 
-    line_plot(find_values_by_agent(model, 'ranking', 'normalized_score'),
-              'time', 'normalized score', 'Scores over time')
-
-    line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time', 'score',
-              'Scores over time')
-
-    # Plot the attribute funding over time
-    line_plot(find_values_by_agent(model, 'Average Spending Per Student',
-                                   'funding'),
-              'time', 'funding',
-              'Average spending per student funding over time')
-
     display_societal_value(model, all_rows=True)
-
-    line_plot(table_column_to_list(model, 'societal_value', 'societal_value',
-                                   [None]), 'time', 'societal value',
-              'Societal value over time')
 
     display_ranking_dynamics(model, all_rows=True)
 
-    plt.show()
+    if DISPLAY_PLOTS:
+        # Plot the normalized score over time
+        line_plot(find_values_by_agent(model, 'ranking', 'normalized_score'),
+                  'time', 'normalized score', 'Scores over time')
+
+        # Plot the scores over time
+        line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time', 'score',
+                  'Scores over time')
+
+        # Plot the attribute funding over time
+        line_plot(find_values_by_agent(model, 'Average Spending Per Student',
+                                       'funding'),
+                  'time', 'funding',
+                  'Average spending per student funding over time')
+
+        # Plot the societal value over time
+        line_plot(table_column_to_list(model, 'societal_value', 'societal_value',
+                                       [None]), 'time', 'societal value',
+                  'Societal value over time')
+
+        plt.show()
 
 # Agent based models
 # Copyright (C) 2019 David Balash

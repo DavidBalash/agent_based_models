@@ -9,9 +9,9 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
-def weightage_function_mock(t):
+def weightage_function_mock(time_step):
     """Weightage function mock."""
-    return t
+    return time_step
 
 
 def valuation_function_mock(value):

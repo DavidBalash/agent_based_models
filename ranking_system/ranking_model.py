@@ -1,4 +1,5 @@
 """The ranking model class file."""
+import itertools
 import logging.config
 import numpy as np
 import pandas as pd
@@ -36,10 +37,10 @@ class RankingModel(Model):
         """
 
         super().__init__()
-        LOGGER.debug('number_of_agents = {}'.format(number_of_agents))
-        LOGGER.debug('attributes = {}'.format(attributes))
-        LOGGER.debug('settings = {}'.format(settings))
-        LOGGER.debug('random_seed = {}'.format(random_seed))
+        LOGGER.debug('number_of_agents = %f', number_of_agents)
+        LOGGER.debug('attributes = %s', attributes)
+        LOGGER.debug('settings = %s', settings)
+        LOGGER.debug('random_seed = %s', random_seed)
 
         self.reset_randomizer(random_seed)
         self.agents = []
@@ -57,36 +58,21 @@ class RankingModel(Model):
             self.agents.append(agent)
             self.schedule.add(agent)
 
-        # Columns used in the ranking table.
-        self.rank_columns = ['element', 'period', 'position', 'score',
-                             'normalized_score']
-
-        # Columns used in the societal value table.
-        self.societal_value_columns = ['period', 'societal_value']
-
-        # Columns used in the attribute tables.
-        self.attribute_columns = ['element', 'period', 'funding', 'production',
-                                  'valuation', 'weight', 'score']
-
-        # Columns used in the ranking_dynamics table.
-        self.ranking_dynamics_columns = ['period', 'distance', 'society_delta',
-                                         'gamma']
-
         # Setup tables to add to the data collector
-        tables = {'ranking': self.rank_columns,
-                  'societal_value': self.societal_value_columns,
-                  'ranking_dynamics': self.ranking_dynamics_columns}
+        tables = {'ranking': ['element', 'period', 'position', 'score',
+                              'normalized_score'],
+                  'societal_value': ['period', 'societal_value'],
+                  'ranking_dynamics': ['period', 'distance', 'society_delta',
+                                       'gamma']}
 
         # Add a table per attribute
-        for index, attribute in enumerate(self.attributes):
-            tables[attribute.name] = self.attribute_columns
+        for attribute in self.attributes:
+            tables[attribute.name] = ['element', 'period', 'funding',
+                                      'production', 'valuation', 'weight',
+                                      'score']
 
         # Setup a data collector
         self.data_collector = DataCollector(tables=tables)
-
-        # Remove the position column since it will be added back during the
-        # update ranking process
-        self.rank_columns.remove('position')
 
     def run(self, number_of_steps):
         """Run the model for the input number of time steps.
@@ -106,6 +92,9 @@ class RankingModel(Model):
 
         # Update the agent ranking
         self._update_ranking()
+
+        # Update the agent attribute scores
+        self._update_attribute_scores()
 
         # Update the societal value table
         self._update_societal_value()
@@ -140,15 +129,39 @@ class RankingModel(Model):
                                    self.NORMALIZED_SCORE_RANGE)))
 
     def _update_ranking(self):
-        """Update the agent's ranking based on agent score."""
-        attribute_scores = []
-        for index, _ in enumerate(self.attributes):
-            attribute_scores.append([])
+        """Update each agent's ranking based on agent score."""
+
+        # Get the current agent scores.
         agent_scores = []
         for agent in self.agents:
             agent_scores.append([agent.unique_id, self.schedule.time,
                                  round(agent.score, self.DECIMAL_PLACES),
                                  self._normalize_score(agent.score)])
+
+        # Get the ranking columns from the ranking table.
+        ranking_columns = list(self.data_collector.
+                               get_table_dataframe('ranking'))
+
+        # Remove the position column since it will be added back after ranking.
+        ranking_columns.remove('position')
+        agent_rank = pd.DataFrame(agent_scores, columns=ranking_columns)
+
+        # Use pandas data frame to rank the agents.
+        agent_rank['position'] =\
+            agent_rank['score'].rank(method='min', ascending=False).astype(int)
+
+        # Add the records as a row in the ranking table.
+        for row in agent_rank.to_dict('records'):
+            self.data_collector.add_table_row('ranking', row)
+
+    def _update_attribute_scores(self):
+        """Update each agent's attribute scores and related values."""
+
+        # Initialize the attribute scores list.
+        attribute_scores = list(itertools.repeat([], len(self.attributes)))
+
+        # For each agent and each attribute append to the attribute scores list.
+        for agent in self.agents:
             for index, attribute in enumerate(self.attributes):
                 step_index = self.schedule.time - 1
                 funds = agent.attribute_funding[attribute.name][step_index]
@@ -163,25 +176,20 @@ class RankingModel(Model):
                               round(value * weight, self.DECIMAL_PLACES)]
                 attribute_scores[index].append(attributes)
 
-        agent_rank = pd.DataFrame(agent_scores, columns=self.rank_columns)
-
-        # Use pandas data frame to rank the agents.
-        agent_rank['position'] =\
-            agent_rank['score'].rank(method='min', ascending=False).astype(int)
-
-        for row in agent_rank.to_dict('records'):
-            self.data_collector.add_table_row('ranking', row)
-
         # Add a table per attribute
         for index, attribute in enumerate(self.attributes):
+            attribute_columns = list(self.data_collector.
+                                     get_table_dataframe(attribute.name))
             attribute_score = pd.DataFrame(attribute_scores[index],
-                                           columns=self.attribute_columns)
+                                           columns=attribute_columns)
+            # Add the attribute scores as a row in the attribute score table.
             for row in attribute_score.to_dict('records'):
                 self.data_collector.add_table_row(attribute.name, row)
 
     def _update_ranking_dynamics(self):
         """Update the ranking dynamics table."""
 
+        # If we are not the the second scheduled time step yet then return.
         if self.schedule.time < 2:
             return
 
@@ -197,6 +205,7 @@ class RankingModel(Model):
                     delta -= row['position']
             if delta > 0:
                 distance += delta
+            LOGGER.debug("agent = %s  distance = %f", agent, distance)
 
         society = self.data_collector.get_table_dataframe('societal_value')
         society_t = 0
@@ -209,28 +218,39 @@ class RankingModel(Model):
 
         society_delta = society_t - society_t_minus_one
 
+        # Calculate gamma
+        gamma = 0
+        if society_delta > 0:
+            gamma = distance / society_delta
+
+        # Build the ranking dynamics row.
         ranking_dynamics_row = {'period': self.schedule.time,
                                 'distance': distance,
                                 'society_delta': round(society_delta,
                                                        self.DECIMAL_PLACES),
-                                'gamma': distance / society_delta}
+                                'gamma': gamma}
 
+        # Add the ranking dynamics row to the ranking dynamics table.
         self.data_collector.add_table_row('ranking_dynamics',
                                           ranking_dynamics_row)
 
     def _update_societal_value(self):
         """Update the societal value table."""
 
+        # Sum the production values over all agents and all of their attributes.
         sum_production_values = 0
         for agent in self.agents:
-            for index, attribute in enumerate(self.attributes):
+            for attribute in self.attributes:
                 step_index = self.schedule.time - 1
                 produce = agent.attribute_production[attribute.name][step_index]
                 sum_production_values += produce
 
+        # Build the societal value row.
         societal_value_row = {'period': self.schedule.time,
                               'societal_value': round(sum_production_values,
                                                       self.DECIMAL_PLACES)}
+
+        # Add the societal value row to the societal value table.
         self.data_collector.add_table_row('societal_value', societal_value_row)
 
 

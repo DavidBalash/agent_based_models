@@ -26,9 +26,6 @@ class RankingAgent(Agent):
         """
 
         super().__init__(unique_id, model)
-        # Initialize the agent's production input elasticity value alpha.
-        self._alpha = self.random.random()
-
         # Initialize the agent's budget.
         self._budget = self.random.uniform(model.settings['expenditure_min'],
                                            model.settings['expenditure_max'])
@@ -57,7 +54,7 @@ class RankingAgent(Agent):
         # The production efficiencies by attribute
         self._production_efficiencies = {}
 
-        # Start with a certain amount of attributes.
+        # Setup the attributes.
         for attribute in model.attributes:
             inventory_attribute = copy.deepcopy(attribute)
             self._inventory.append(inventory_attribute)
@@ -88,29 +85,25 @@ class RankingAgent(Agent):
         :return: The result of applying the objective function to the variables.
         """
 
-        LOGGER.debug('variables = {}'.format(variables))
-
         # Calculate the the attribute scores.
         attribute_scores = []
         for index, attribute in enumerate(self._inventory):
             # Get the weight for this attribute.
             weight = attribute.weightage(self.model.schedule.time)
-            LOGGER.debug('weight = {}'.format(weight))
 
             # Get the true value of this attribute from the production function.
             efficiency = self._production_efficiencies[attribute.name]
             production = attribute.production(variables[index], efficiency)
-            LOGGER.debug('efficiency = {}'.format(efficiency))
-            LOGGER.debug('variables[{}] = {}'.format(index, variables[index]))
-            LOGGER.debug('production = {}'.format(production))
+            LOGGER.debug('funding = %f  efficiency = %f  production = %f',
+                         variables[index], efficiency, production)
 
             # Get the valuation of the attribute from the valuation function.
             valuation = attribute.valuation(production)
-            LOGGER.debug('valuation = {}'.format(valuation))
 
             # Calculate the score of this attribute.
             score = weight * valuation
-            LOGGER.debug('score = {}'.format(score))
+            LOGGER.debug('weight = %f  valuation = %f  score = %f',
+                         weight, valuation, score)
 
             # Append the score to the attribute scores list.
             attribute_scores.append(score)
@@ -119,9 +112,10 @@ class RankingAgent(Agent):
         # to use the scipy minimize optimization function.
         # sum(weight * valuation(production))
         sign = -1
-        function_output = sign * sum(attribute_scores)
-        LOGGER.debug('sum = {}'.format(sum(attribute_scores)))
-        LOGGER.debug('objective function output = {}'.format(function_output))
+        sum_attribute_scores = sum(attribute_scores)
+        function_output = sign * sum_attribute_scores
+        LOGGER.debug('sum_attribute_scores = %f  function_output = %f',
+                     sum_attribute_scores, function_output)
 
         return function_output
 

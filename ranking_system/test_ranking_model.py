@@ -1,4 +1,5 @@
 """Unit test for the Ranking Model class."""
+import logging
 import unittest
 from ranking_system import RankingModel
 from ranking_system import Attribute
@@ -10,45 +11,84 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger(__name__)
+
+
+def weightage_function_mock(time_step):
+    """Weightage function mock."""
+    LOGGER.info('time_step = %f', time_step)
+    return 0.5
+
+
+def valuation_function_mock(value):
+    """Valuation function mock."""
+    return value
+
+
+def production_function_mock(dollars, production_efficiency):
+    """Production function mock."""
+    return dollars * production_efficiency
+
+
 # pylint: disable=protected-access
 class TestRankingModel(unittest.TestCase):
     """Unit test class to test the RankingModel class functions."""
 
     def setUp(self):
         """Setup the test."""
-        seed = 1234
-        self.attributes = [Attribute('attribute-1', 0.6),
-                           Attribute('attribute-2', 0.4)]
+
+        random_seed = 1234
+        self.attribute_1 = Attribute('attribute_1', weightage_function_mock,
+                                     valuation_function_mock,
+                                     production_function_mock)
+        self.attribute_2 = Attribute('attribute_1', weightage_function_mock,
+                                     valuation_function_mock,
+                                     production_function_mock)
+
+        self.attributes = [self.attribute_1, self.attribute_2]
         self.number_of_agents = 5
+        self.settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
         self.model = RankingModel(self.number_of_agents, self.attributes,
-                                  seed=seed)
+                                  self.settings, random_seed=random_seed)
 
     def test_init(self):
         """Test the constructor."""
+
         self.assertEqual(len(self.model.agents), self.number_of_agents,
-                         "Agent size not correct")
-        self.assertEqual(len(self.model.attributes), len(self.attributes))
+                         "Agent size not correct.")
+        self.assertEqual(len(self.model.attributes), len(self.attributes),
+                         "Attributes size not correct.")
 
     def test_run(self):
         """Test the run function."""
+
         number_of_steps = 5
         self.model.run(number_of_steps)
-        self.assertEqual(self.model.schedule.steps, number_of_steps)
+        self.assertEqual(self.model.schedule.steps, number_of_steps,
+                         'Number of model steps not equal.')
 
     def test_step(self):
         """Test the step function."""
+
         self.model.step()
-        self.assertEqual(self.model.schedule.steps, 1)
+        self.assertEqual(self.model.schedule.steps, 1, 'Model steps not equal.')
 
     def test_current_high_score(self):
         """Test the current high score function."""
+
         self.model.step()
-        self.assertEqual(self.model._current_high_score(), 79.57039673536948)
+        self.assertGreater(self.model._current_high_score(), 0,
+                           'Current high score less than 0.')
 
     def test_normalize_score(self):
         """Test the normalize score function."""
+
         self.model.step()
-        self.assertEqual(self.model._normalize_score(200), 100)
+        self.assertGreaterEqual(self.model._normalize_score(200), 0,
+                                'Normalized score less than 0.')
+        self.assertLessEqual(self.model._normalize_score(200), 100,
+                             'Normalized score greater than 100.')
 
 
 if __name__ == '__main__':
