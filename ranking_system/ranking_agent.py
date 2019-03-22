@@ -1,9 +1,7 @@
 """Ranking agent class file."""
 import copy
 import logging
-import numpy as np
 from mesa import Agent
-from scipy.optimize import minimize
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -25,10 +23,14 @@ class RankingAgent(Agent):
         :param model: the model associated with this agent.
         """
 
+        # Call the parent class constructor.
         super().__init__(unique_id, model)
+        LOGGER.debug('unique_id = %s', unique_id)
+
         # Initialize the agent's budget.
         self._budget = self.random.uniform(model.settings['expenditure_min'],
                                            model.settings['expenditure_max'])
+        LOGGER.debug('budget = %f', self._budget)
 
         # Initialize the agent's inventory.
         self._inventory = []
@@ -111,56 +113,35 @@ class RankingAgent(Agent):
         # The sign of the return value must be negative because we are going
         # to use the scipy minimize optimization function.
         # sum(weight * valuation(production))
-        sign = -1
         sum_attribute_scores = sum(attribute_scores)
-        function_output = sign * sum_attribute_scores
-        LOGGER.debug('sum_attribute_scores = %f  function_output = %f',
-                     sum_attribute_scores, function_output)
+        LOGGER.debug('sum_attribute_scores = %f', sum_attribute_scores)
 
-        return function_output
-
-    def _constraint_function(self, variables):
-        """The constraint function to be used in the optimization process.
-
-        :param variables: The variables used in the constraint function.
-        :return: The constraint function.
-        """
-
-        # The constraint function should be negative when the constraint is
-        # violated. The sum of the amount allocated to each attribute should
-        # be less than the total budget.
-        return self._budget - sum(variables)
-
-    def _bounds(self):
-        """Get a list of bounds on to be used in the optimization process.
-
-        :return: List of bounds.
-        """
-
-        # The bounds on the variables which represent the amount allocated to a
-        # particular attribute should be between 0 and the total budget.
-        bounds = []
-        for _ in self._inventory:
-            bounds.append([0, self._budget])
-        return bounds
+        return sum_attribute_scores
 
     def _optimize_attribute_mix(self):
         """Optimize the attribute mix."""
-        # Minimize a scalar function of one or more variables using
-        # Sequential Least SQuares Programming (SLSQP).
-        solution = minimize(self._objective_function,
-                            np.array([self._budget / 2, self._budget / 2]),
-                            method='SLSQP',
-                            bounds=self._bounds(),
-                            constraints={'type': 'ineq',
-                                         'fun': self._constraint_function})
-        return solution.x
+        best = 0
+        best_attribute_mix = [0, 0]
+        step_size = 1000
+
+        for amount_1 in range(0, int(self._budget) + step_size, step_size):
+            for amount_2 in range(0, int(self._budget) + step_size, step_size):
+                # Check the budget constraint.
+                if amount_1 + amount_2 > int(self._budget):
+                    continue
+                result = self._objective_function([amount_1, amount_2])
+                if result > best:
+                    best = result
+                    best_attribute_mix = [amount_1, amount_2]
+
+        return best_attribute_mix
 
     def _buy_attributes(self):
         """Buy attributes based on budget."""
 
         # Use optimization to determine funding allocation.
         funding_allocation = self._optimize_attribute_mix()
+        LOGGER.debug('funding_allocation = %s', funding_allocation)
 
         # Randomly allocate funding to attributes.
         for index, attribute in enumerate(self._inventory):

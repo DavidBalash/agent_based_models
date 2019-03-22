@@ -1,6 +1,8 @@
-"""Run the ranking model."""
-import matplotlib.pyplot as plt
-from ranking_system import *
+"""Unit test for the Ranking Agent class."""
+import unittest
+from ranking_system import Attribute
+from ranking_system import RankingAgent
+from ranking_system import RankingModel
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -9,20 +11,9 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
-# Setup the logger
-setup_logging()
-
-# Run settings
-RUN_VOLATILITY = False
-DISPLAY_PLOTS = False
-
-# Model settings
-number_of_steps = 10
-number_of_agents = 2
-
-
 # Create weightage functions that will return the weight used for time t
 # The sum of the weightage functions at time t must add up to one
+
 def weightage_average_spending_per_student(t):
     """Weight given to average spending per student attribute
        Decreases at time t greater than 5"""
@@ -110,91 +101,83 @@ def production_average_class_size(dollars, production_efficiency):
         return 200
 
 
-# Create a list of M attributes
-# (name, weightage function)
-attributes = [Attribute('Average Spending Per Student',
-                        weightage_average_spending_per_student,
-                        valuation_average_spending_per_student,
-                        production_average_spending_per_student,
-                        ),
-              Attribute('Average Class Size',
-                        weightage_average_class_size,
-                        valuation_average_class_size,
-                        production_average_class_size)]
+# pylint: disable=protected-access
+class TestRankingAgent(unittest.TestCase):
+    """Unit test class to test the RankingAgent class functions."""
 
-settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
-model = RankingModel(number_of_agents, attributes, settings, random_seed=12345)
+    def setUp(self):
+        """Setup the test."""
 
-if RUN_VOLATILITY:
-    normalized_mean_strengths = [None, None]
-    volatility_by_agent = {}
+        # Setup a random seed.
+        random_seed = 1234
 
-    # Setup volatility by agent dictionary
-    # by adding an empty list for each agent
-    for agent in model.agents:
-        volatility_by_agent[agent.unique_id] = [None, None]
+        # Create a list of M attributes
+        # (name, weightage function)
+        self.attributes = [Attribute('Average Spending Per Student',
+                                     weightage_average_spending_per_student,
+                                     valuation_average_spending_per_student,
+                                     production_average_spending_per_student),
+                           Attribute('Average Class Size',
+                                     weightage_average_class_size,
+                                     valuation_average_class_size,
+                                     production_average_class_size)]
 
-    # Manually step though the number of steps
-    for step in range(number_of_steps):
-        model.step()
-        if step > 0:
-            model_df = model.data_collector.get_table_dataframe('ranking')
-            ranking_dynamics_volatility = RankingDynamicsVolatility(model_df)
-            normalized_mean_strengths.append(ranking_dynamics_volatility
-                                             .get_normalized_mean_strength())
-            total_results = ranking_dynamics_volatility.get_results()
-            for _, row in total_results.iterrows():
-                volatility_by_agent[row.element].append(row.volatility)
+        self.number_of_agents = 2
+        self.settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
 
-    # Plot the total volatility over time
-    line_plot(normalized_mean_strengths, 'time',
-              'normalized mean strength (NS)', 'Volatility over time')
+        # Create a new ranking model.
+        self.model = RankingModel(self.number_of_agents, self.attributes,
+                                  self.settings, random_seed=random_seed)
 
-    # Plot the agent volatility over time
-    line_plot(volatility_by_agent, 'time', 'relative volatility',
-              'Agent volatility over time')
+        # Create a new ranking agent
+        self.agent_1 = RankingAgent('Agent_1', self.model)
 
-    # Plot the agent score over time
-    line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time', 'score',
-              'Agent score over time')
+    def test_optimize_attribute_mix(self):
+        """Test the agent optimize attribute mix function."""
+        attribute_mix = self.agent_1._optimize_attribute_mix()
+        print('attribute_mix = ', attribute_mix)
+        self.agent_1.model.schedule.step()
+        attribute_mix = self.agent_1._optimize_attribute_mix()
+        print('attribute_mix = ', attribute_mix)
 
-    plt.show()
-else:
-    # Manually step though the number of steps
-    for step in range(number_of_steps):
-        model.step()
+    def test_buy_attributes(self):
+        """Test the buy attributes function."""
 
-    display_ranking(model, all_rows=False)
+        print("budget = ", self.agent_1._budget)
+        self.agent_1.step()
+        self.model.schedule.time += 1
+        print("funding = ", self.agent_1.attribute_funding)
+        print("valuation = ", self.agent_1.attribute_valuation)
+        print("weight = ", self.agent_1.attribute_weight)
+        print("budget = ", self.agent_1._budget)
+        self.agent_1.step()
+        self.model.schedule.time += 1
+        print("funding = ", self.agent_1.attribute_funding)
+        print("valuation = ", self.agent_1.attribute_valuation)
+        print("weight = ", self.agent_1.attribute_weight)
+        print("budget = ", self.agent_1._budget)
+        self.agent_1.step()
+        self.model.schedule.time += 1
+        print("funding = ", self.agent_1.attribute_funding)
+        print("valuation = ", self.agent_1.attribute_valuation)
+        print("weight = ", self.agent_1.attribute_weight)
 
-    display_attribute(model, 'Average Spending Per Student', all_rows=False)
+    def test_step(self):
+        """Test the step function."""
+        self.agent_1.step()
+        print(self.agent_1.attribute_funding)
+        print(self.agent_1.attribute_valuation)
+        print(self.agent_1.attribute_weight)
+        print(self.agent_1.score)
+        self.agent_1.step()
+        print(self.agent_1.attribute_funding)
+        print(self.agent_1.attribute_valuation)
+        print(self.agent_1.attribute_weight)
+        print(self.agent_1.score)
 
-    display_attribute(model, 'Average Class Size', all_rows=False)
 
-    display_societal_value(model, all_rows=True)
-
-    display_ranking_dynamics(model, all_rows=True)
-
-    if DISPLAY_PLOTS:
-        # Plot the normalized score over time
-        line_plot(find_values_by_agent(model, 'ranking', 'normalized_score'),
-                  'time', 'normalized score', 'Scores over time')
-
-        # Plot the scores over time
-        line_plot(find_values_by_agent(model, 'ranking', 'score'), 'time',
-                  'score', 'Scores over time')
-
-        # Plot the attribute funding over time
-        line_plot(find_values_by_agent(model, 'Average Spending Per Student',
-                                       'funding'),
-                  'time', 'funding',
-                  'Average spending per student funding over time')
-
-        # Plot the societal value over time
-        line_plot(table_column_to_list(model, 'societal_value',
-                                       'societal_value', [None]),
-                  'time', 'societal value', 'Societal value over time')
-
-        plt.show()
+if __name__ == '__main__':
+    unittest.main()
 
 # Agent based models
 # Copyright (C) 2019 David Balash
