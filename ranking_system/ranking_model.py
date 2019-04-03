@@ -1,5 +1,4 @@
 """The ranking model class file."""
-import itertools
 import logging.config
 import numpy as np
 import pandas as pd
@@ -158,7 +157,7 @@ class RankingModel(Model):
         """Update each agent's attribute scores and related values."""
 
         # Initialize the attribute scores list.
-        attribute_scores = list(itertools.repeat([], len(self.attributes)))
+        attribute_scores = [[] for _ in range(len(self.attributes))]
 
         # For each agent and each attribute append to the attribute scores list.
         for agent in self.agents:
