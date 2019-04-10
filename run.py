@@ -1,5 +1,7 @@
 """Run the ranking model."""
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 from ranking_system import *
 
 __author__ = "David Balash"
@@ -14,7 +16,11 @@ setup_logging()
 
 # Run settings
 RUN_VOLATILITY = False
-DISPLAY_PLOTS = False
+DISPLAY_LINE_PLOTS = False
+DISPLAY_3D_PLOTS = False
+DISPLAY_VALUATION_PLOTS = True
+DISPLAY_PRODUCTION_PLOTS = True
+DISPLAY_SCORE_PLOTS = True
 
 # Model settings
 number_of_steps = 10
@@ -40,38 +46,76 @@ def weightage_average_class_size(t):
 
 def valuation_average_spending_per_student(average_spending_per_student):
     """Valuation given to the average spending per student attribute"""
+    range_contained = [-6, 6]
     # Step like function for average spending per student
     if average_spending_per_student > 10_000:
         # Spending more than 10,000 per student receives the most credit
         return 100
     elif average_spending_per_student > 7_500:
         # Spending between 7,500 and 10,000 per student scores second highest
+        if average_spending_per_student >= 9_999:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [9_999, 10_000],
+                                               range_contained)),
+                             [-1, 1], [75, 100])
         return 75
     elif average_spending_per_student > 5_000:
         # Spending between 5,000 and 7,500 per student scores third highest
+        if average_spending_per_student >= 7_499:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [7_499, 7_500],
+                                               range_contained)),
+                             [-1, 1], [50, 75])
         return 50
     elif average_spending_per_student > 2_500:
         # Spending between 2,500 and 5,000 per student scores fourth highest
+        if average_spending_per_student >= 4_999:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [4_999, 5_000],
+                                               range_contained)),
+                             [-1, 1], [25, 50])
         return 25
     else:
         # Spending less than 2,500 per student receives no credit
+        if average_spending_per_student >= 2_499:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [2_499, 2_500],
+                                               range_contained)),
+                             [-1, 1], [0, 25])
         return 0
 
 
 def valuation_average_class_size(average_class_size):
     """Valuation given to the average class size attribute"""
+    range_contained = [-6, 6]
     # Step like function for average class size
     if average_class_size < 20:
         # Classes with fewer than 20 students receive the most credit
+        if average_class_size >= 19:
+            return np.interp(np.tanh(np.interp(average_class_size, [19, 20],
+                                               range_contained)),
+                             [-1, 1], [100, 75])
         return 100
     elif average_class_size < 30:
         # Classes with 20 to 29 students score second highest
+        if average_class_size >= 29:
+            return np.interp(np.tanh(np.interp(average_class_size, [29, 30],
+                                               range_contained)),
+                             [-1, 1], [75, 50])
         return 75
     elif average_class_size < 40:
         # Classes with 30 to 39 students score third highest
+        if average_class_size >= 39:
+            return np.interp(np.tanh(np.interp(average_class_size, [39, 40],
+                                               range_contained)),
+                             [-1, 1], [50, 25])
         return 50
     elif average_class_size < 50:
         # Classes with 40 to 49 students score fourth highest
+        if average_class_size >= 49:
+            return np.interp(np.tanh(np.interp(average_class_size, [49, 50],
+                                               range_contained)),
+                             [-1, 1], [25, 0])
         return 25
     else:
         # Classes that are 50 or more students receive no credit
@@ -93,21 +137,10 @@ def production_average_spending_per_student(dollars, production_efficiency):
 
 def production_average_class_size(dollars, production_efficiency):
     """Production function for the average class size attribute"""
-    class_size_dollars = dollars * production_efficiency
-    if class_size_dollars > 10_000:
-        return 10
-    elif class_size_dollars > 9_000:
-        return 20
-    elif class_size_dollars > 6_000:
-        return 30
-    elif class_size_dollars > 3_000:
-        return 40
-    elif class_size_dollars > 2_000:
-        return 50
-    elif class_size_dollars > 1_000:
-        return 100
-    else:
-        return 200
+    max_value = 15_000
+    steepness = 3 * production_efficiency
+    return 200 - (200 * np.tanh(np.interp(dollars, [0, max_value],
+                                          [0, steepness])))
 
 
 # Create a list of M attributes
@@ -174,7 +207,87 @@ else:
 
     display_ranking_dynamics(model, all_rows=True)
 
-    if DISPLAY_PLOTS:
+    if DISPLAY_PRODUCTION_PLOTS:
+        productions = []
+        for amount in range(15_000):
+            productions.append(production_average_class_size(amount, 0.75))
+
+        _, axes = plt.subplots()
+        axes.plot(productions)
+        axes.set(xlabel='amount', ylabel='class size',
+                 title='Class size by amount')
+
+        productions = []
+        for amount in range(15_000):
+            productions.append(production_average_spending_per_student(amount,
+                                                                       0.75))
+
+        _, axes = plt.subplots()
+        axes.plot(productions)
+        axes.set(xlabel='amount', ylabel='spending per student',
+                 title='Spending per student by amount')
+
+    if DISPLAY_VALUATION_PLOTS:
+        amounts = np.linspace(0, 15_000, 1_000_000)
+        valuations = []
+        for amount in amounts:
+            valuations.append(valuation_average_spending_per_student(amount))
+
+        _, axes = plt.subplots()
+        axes.plot(amounts, valuations)
+        axes.set(xlabel='spending per student', ylabel='score',
+                 title='Score by spending per student')
+
+        class_sizes = np.linspace(0, 60, 10_000)
+        valuations = []
+        for class_size in class_sizes:
+            valuations.append(valuation_average_class_size(class_size))
+
+        _, axes = plt.subplots()
+        axes.plot(class_sizes, valuations)
+        axes.set(xlabel='class size', ylabel='score',
+                 title='Score by class size')
+
+    if DISPLAY_SCORE_PLOTS:
+        for attribute in model.attributes:
+            scores = []
+            for amount in range(15_000):
+                # Get the weight for this attribute.
+                weight = attribute.weightage(1)
+
+                # Get the value of this attribute from the production function.
+                efficiency = 0.75
+                production = attribute.production(amount, efficiency)
+
+                # Get the valuation of the attribute from valuation function.
+                valuation = attribute.valuation(production)
+
+                # Calculate the score of this attribute.
+                score = weight * valuation
+
+                scores.append(score)
+            _, axes = plt.subplots()
+            axes.plot(scores)
+            axes.set(xlabel='amount', ylabel='score',
+                     title='{} score by spending amount'.format(attribute.name))
+
+    if DISPLAY_3D_PLOTS:
+        fig = plt.figure()
+        ax = Axes3D(fig)
+
+        xs = []
+        ys = []
+        zs = []
+
+        for x in range(0, 15_000 + 100, 100):
+            for y in range(0, 15_000 + 100, 100):
+                xs.append(x)
+                ys.append(y)
+                zs.append(model.agents[0].objective_function([x, y]))
+
+        ax.plot(xs, ys, zs)
+
+    if DISPLAY_LINE_PLOTS:
         # Plot the normalized score over time
         line_plot(find_values_by_agent(model, 'ranking', 'normalized_score'),
                   'time', 'normalized score', 'Scores over time')
@@ -194,7 +307,8 @@ else:
                                        'societal_value', [None]),
                   'time', 'societal value', 'Societal value over time')
 
-        plt.show()
+    # Show the plots
+    plt.show()
 
 # Agent based models
 # Copyright (C) 2019 David Balash

@@ -77,7 +77,7 @@ class RankingAgent(Agent):
         self._increment_budget()
         self._calculate_score()
 
-    def _objective_function(self, variables):
+    def objective_function(self, variables):
         """The objective function to be used in the optimization process.
 
         This is the minus one times the sum(weight * valuation(production)) to
@@ -129,7 +129,7 @@ class RankingAgent(Agent):
                 # Check the budget constraint.
                 if amount_1 + amount_2 > int(self._budget):
                     continue
-                result = self._objective_function([amount_1, amount_2])
+                result = self.objective_function([amount_1, amount_2])
                 if result > best:
                     best = result
                     best_attribute_mix = [amount_1, amount_2]
