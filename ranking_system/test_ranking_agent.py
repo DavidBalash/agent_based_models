@@ -1,4 +1,5 @@
 """Unit test for the Ranking Agent class."""
+import numpy as np
 import unittest
 from ranking_system import Attribute
 from ranking_system import RankingAgent
@@ -17,13 +18,13 @@ __status__ = "Prototype"
 def weightage_average_spending_per_student(t):
     """Weight given to average spending per student attribute
        Decreases at time t greater than 5"""
-    return 0.7 if t < 5 else 0.6
+    return 0.7 if t < 1 else 0.3
 
 
 def weightage_average_class_size(t):
     """Weight given to average class size attribute
        Increases at time t greater than 5"""
-    return 0.3 if t < 5 else 0.4
+    return 0.3 if t < 1 else 0.7
 
 
 # Create valuation functions
@@ -31,38 +32,76 @@ def weightage_average_class_size(t):
 
 def valuation_average_spending_per_student(average_spending_per_student):
     """Valuation given to the average spending per student attribute"""
+    range_contained = [-6, 6]
     # Step like function for average spending per student
     if average_spending_per_student > 10_000:
         # Spending more than 10,000 per student receives the most credit
         return 100
     elif average_spending_per_student > 7_500:
         # Spending between 7,500 and 10,000 per student scores second highest
+        if average_spending_per_student >= 9_999:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [9_999, 10_000],
+                                               range_contained)),
+                             [-1, 1], [75, 100])
         return 75
     elif average_spending_per_student > 5_000:
         # Spending between 5,000 and 7,500 per student scores third highest
+        if average_spending_per_student >= 7_499:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [7_499, 7_500],
+                                               range_contained)),
+                             [-1, 1], [50, 75])
         return 50
     elif average_spending_per_student > 2_500:
         # Spending between 2,500 and 5,000 per student scores fourth highest
+        if average_spending_per_student >= 4_999:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [4_999, 5_000],
+                                               range_contained)),
+                             [-1, 1], [25, 50])
         return 25
     else:
         # Spending less than 2,500 per student receives no credit
+        if average_spending_per_student >= 2_499:
+            return np.interp(np.tanh(np.interp(average_spending_per_student,
+                                               [2_499, 2_500],
+                                               range_contained)),
+                             [-1, 1], [0, 25])
         return 0
 
 
 def valuation_average_class_size(average_class_size):
     """Valuation given to the average class size attribute"""
+    range_contained = [-6, 6]
     # Step like function for average class size
     if average_class_size < 20:
         # Classes with fewer than 20 students receive the most credit
+        if average_class_size >= 19:
+            return np.interp(np.tanh(np.interp(average_class_size, [19, 20],
+                                               range_contained)),
+                             [-1, 1], [100, 75])
         return 100
     elif average_class_size < 30:
         # Classes with 20 to 29 students score second highest
+        if average_class_size >= 29:
+            return np.interp(np.tanh(np.interp(average_class_size, [29, 30],
+                                               range_contained)),
+                             [-1, 1], [75, 50])
         return 75
     elif average_class_size < 40:
         # Classes with 30 to 39 students score third highest
+        if average_class_size >= 39:
+            return np.interp(np.tanh(np.interp(average_class_size, [39, 40],
+                                               range_contained)),
+                             [-1, 1], [50, 25])
         return 50
     elif average_class_size < 50:
         # Classes with 40 to 49 students score fourth highest
+        if average_class_size >= 49:
+            return np.interp(np.tanh(np.interp(average_class_size, [49, 50],
+                                               range_contained)),
+                             [-1, 1], [25, 0])
         return 25
     else:
         # Classes that are 50 or more students receive no credit
@@ -84,21 +123,10 @@ def production_average_spending_per_student(dollars, production_efficiency):
 
 def production_average_class_size(dollars, production_efficiency):
     """Production function for the average class size attribute"""
-    class_size_dollars = dollars * production_efficiency
-    if class_size_dollars > 10_000:
-        return 10
-    elif class_size_dollars > 9_000:
-        return 20
-    elif class_size_dollars > 6_000:
-        return 30
-    elif class_size_dollars > 3_000:
-        return 40
-    elif class_size_dollars > 2_000:
-        return 50
-    elif class_size_dollars > 1_000:
-        return 100
-    else:
-        return 200
+    max_value = 15_000
+    steepness = 3 * production_efficiency
+    return 200 - (200 * np.tanh(np.interp(dollars, [0, max_value],
+                                          [0, steepness])))
 
 
 # pylint: disable=protected-access
@@ -132,13 +160,32 @@ class TestRankingAgent(unittest.TestCase):
         # Create a new ranking agent
         self.agent_1 = RankingAgent('Agent_1', self.model)
 
+    def brute_force_attribute_mix(self):
+        best = 0
+        best_attribute_mix = [0, 0]
+        step_size = 1000
+
+        for amount_1 in range(0, int(self.agent_1._budget) + step_size, step_size):
+            for amount_2 in range(0, int(self.agent_1._budget) + step_size, step_size):
+                # Check the budget constraint.
+                if amount_1 + amount_2 > int(self.agent_1._budget):
+                    continue
+                result = self.agent_1.objective_function([amount_1, amount_2])
+                if result < best:
+                    best = result
+                    best_attribute_mix = [amount_1, amount_2]
+
+        print('brute force attribute mix = ', best_attribute_mix)
+
     def test_optimize_attribute_mix(self):
         """Test the agent optimize attribute mix function."""
         attribute_mix = self.agent_1._optimize_attribute_mix()
         print('attribute_mix = ', attribute_mix)
+        self.brute_force_attribute_mix()
         self.agent_1.model.schedule.step()
         attribute_mix = self.agent_1._optimize_attribute_mix()
         print('attribute_mix = ', attribute_mix)
+        self.brute_force_attribute_mix()
 
     def test_buy_attributes(self):
         """Test the buy attributes function."""
