@@ -3,8 +3,7 @@ import copy
 import logging
 import numpy as np
 from mesa import Agent
-from numpy import random
-from scipy.optimize import minimize
+from scipy.optimize import basinhopping
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -68,7 +67,7 @@ class RankingAgent(Agent):
             self.attribute_valuation[attribute.name] = []
             self.attribute_weight[attribute.name] = []
             self._production_efficiencies[attribute.name] =\
-                model.random.uniform(0.5, 1)
+                self.random.uniform(0.5, 1)
 
     def step(self):
         """The agent's step method.
@@ -149,23 +148,34 @@ class RankingAgent(Agent):
             bounds.append([0, self._budget])
         return bounds
 
+    def _basin_hopping_bounds(self, **kwargs):
+        x = kwargs["x_new"]
+        x_min = bool(np.all(x >= 0.0))
+        x_max = bool(np.all(x <= self._budget))
+        sum_bool = bool(sum(x) <= self._budget)
+        return x_max and x_min and sum_bool
+
     def _optimize_attribute_mix(self):
         """Optimize the attribute mix."""
         # Minimize a scalar function of one or more variables using
         # Sequential Least Squares Programming (SLSQP).
+
+        number_of_initial_values = 5
+        temperature = 10
+        step_size = 100
+
         best_attribute_mix = [0, 0]
         best_result = self.objective_function(best_attribute_mix)
 
         # Optimize multiple times with random initialization values.
-        for _ in range(100):
-            x0 = [random.randint(0, self._budget),
-                  random.randint(0, self._budget)]
-            solution = minimize(self.objective_function,
-                                np.array(x0),
-                                method='SLSQP',
-                                bounds=self._bounds(),
-                                constraints={'type': 'ineq',
-                                             'fun': self._constraint_function})
+        for _ in range(number_of_initial_values):
+            random_array = np.random.random(len(self._inventory))
+            x0 = (random_array / random_array.sum()) * self._budget
+            solution = basinhopping(self.objective_function, x0,
+                                    T=temperature, stepsize=step_size,
+                                    accept_test=self._basin_hopping_bounds,
+                                    minimizer_kwargs={'method': 'BFGS'},
+                                    niter=2_000)
             attribute_mix = [int(solution.x[0]), int(solution.x[1])]
             result = self.objective_function(attribute_mix)
             if result < best_result:

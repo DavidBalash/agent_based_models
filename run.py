@@ -19,11 +19,11 @@ RUN_VOLATILITY = False
 DISPLAY_LINE_PLOTS = False
 DISPLAY_3D_PLOTS = False
 DISPLAY_VALUATION_PLOTS = True
-DISPLAY_PRODUCTION_PLOTS = True
-DISPLAY_SCORE_PLOTS = True
+DISPLAY_PRODUCTION_PLOTS = False
+DISPLAY_SCORE_PLOTS = False
 
 # Model settings
-number_of_steps = 10
+number_of_steps = 3
 number_of_agents = 2
 
 
@@ -46,76 +46,40 @@ def weightage_average_class_size(t):
 
 def valuation_average_spending_per_student(average_spending_per_student):
     """Valuation given to the average spending per student attribute"""
-    range_contained = [-6, 6]
+
     # Step like function for average spending per student
     if average_spending_per_student > 10_000:
         # Spending more than 10,000 per student receives the most credit
         return 100
     elif average_spending_per_student > 7_500:
         # Spending between 7,500 and 10,000 per student scores second highest
-        if average_spending_per_student >= 9_999:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [9_999, 10_000],
-                                               range_contained)),
-                             [-1, 1], [75, 100])
         return 75
     elif average_spending_per_student > 5_000:
         # Spending between 5,000 and 7,500 per student scores third highest
-        if average_spending_per_student >= 7_499:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [7_499, 7_500],
-                                               range_contained)),
-                             [-1, 1], [50, 75])
         return 50
     elif average_spending_per_student > 2_500:
         # Spending between 2,500 and 5,000 per student scores fourth highest
-        if average_spending_per_student >= 4_999:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [4_999, 5_000],
-                                               range_contained)),
-                             [-1, 1], [25, 50])
         return 25
     else:
         # Spending less than 2,500 per student receives no credit
-        if average_spending_per_student >= 2_499:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [2_499, 2_500],
-                                               range_contained)),
-                             [-1, 1], [0, 25])
         return 0
 
 
 def valuation_average_class_size(average_class_size):
     """Valuation given to the average class size attribute"""
-    range_contained = [-6, 6]
+
     # Step like function for average class size
     if average_class_size < 20:
         # Classes with fewer than 20 students receive the most credit
-        if average_class_size >= 19:
-            return np.interp(np.tanh(np.interp(average_class_size, [19, 20],
-                                               range_contained)),
-                             [-1, 1], [100, 75])
         return 100
     elif average_class_size < 30:
         # Classes with 20 to 29 students score second highest
-        if average_class_size >= 29:
-            return np.interp(np.tanh(np.interp(average_class_size, [29, 30],
-                                               range_contained)),
-                             [-1, 1], [75, 50])
         return 75
     elif average_class_size < 40:
         # Classes with 30 to 39 students score third highest
-        if average_class_size >= 39:
-            return np.interp(np.tanh(np.interp(average_class_size, [39, 40],
-                                               range_contained)),
-                             [-1, 1], [50, 25])
         return 50
     elif average_class_size < 50:
         # Classes with 40 to 49 students score fourth highest
-        if average_class_size >= 49:
-            return np.interp(np.tanh(np.interp(average_class_size, [49, 50],
-                                               range_contained)),
-                             [-1, 1], [25, 0])
         return 25
     else:
         # Classes that are 50 or more students receive no credit

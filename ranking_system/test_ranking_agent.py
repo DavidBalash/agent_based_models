@@ -4,6 +4,7 @@ import unittest
 from ranking_system import Attribute
 from ranking_system import RankingAgent
 from ranking_system import RankingModel
+from scipy.optimize import basinhopping
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -12,19 +13,24 @@ __version__ = "0.0.1"
 __status__ = "Prototype"
 
 
+def print_fun(x, f, accepted):
+    if int(accepted) > 0 and f < 0.0:
+        print("x = ", x, "  objective = ", f)
+
+
 # Create weightage functions that will return the weight used for time t
 # The sum of the weightage functions at time t must add up to one
 
 def weightage_average_spending_per_student(t):
     """Weight given to average spending per student attribute
        Decreases at time t greater than 5"""
-    return 0.7 if t < 1 else 0.3
+    return 0.7 if t < 1 else 0.66
 
 
 def weightage_average_class_size(t):
     """Weight given to average class size attribute
        Increases at time t greater than 5"""
-    return 0.3 if t < 1 else 0.7
+    return 0.3 if t < 1 else 0.34
 
 
 # Create valuation functions
@@ -32,76 +38,40 @@ def weightage_average_class_size(t):
 
 def valuation_average_spending_per_student(average_spending_per_student):
     """Valuation given to the average spending per student attribute"""
-    range_contained = [-6, 6]
+
     # Step like function for average spending per student
     if average_spending_per_student > 10_000:
         # Spending more than 10,000 per student receives the most credit
         return 100
     elif average_spending_per_student > 7_500:
         # Spending between 7,500 and 10,000 per student scores second highest
-        if average_spending_per_student >= 9_999:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [9_999, 10_000],
-                                               range_contained)),
-                             [-1, 1], [75, 100])
         return 75
     elif average_spending_per_student > 5_000:
         # Spending between 5,000 and 7,500 per student scores third highest
-        if average_spending_per_student >= 7_499:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [7_499, 7_500],
-                                               range_contained)),
-                             [-1, 1], [50, 75])
         return 50
     elif average_spending_per_student > 2_500:
         # Spending between 2,500 and 5,000 per student scores fourth highest
-        if average_spending_per_student >= 4_999:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [4_999, 5_000],
-                                               range_contained)),
-                             [-1, 1], [25, 50])
         return 25
     else:
         # Spending less than 2,500 per student receives no credit
-        if average_spending_per_student >= 2_499:
-            return np.interp(np.tanh(np.interp(average_spending_per_student,
-                                               [2_499, 2_500],
-                                               range_contained)),
-                             [-1, 1], [0, 25])
         return 0
 
 
 def valuation_average_class_size(average_class_size):
     """Valuation given to the average class size attribute"""
-    range_contained = [-6, 6]
+
     # Step like function for average class size
     if average_class_size < 20:
         # Classes with fewer than 20 students receive the most credit
-        if average_class_size >= 19:
-            return np.interp(np.tanh(np.interp(average_class_size, [19, 20],
-                                               range_contained)),
-                             [-1, 1], [100, 75])
         return 100
     elif average_class_size < 30:
         # Classes with 20 to 29 students score second highest
-        if average_class_size >= 29:
-            return np.interp(np.tanh(np.interp(average_class_size, [29, 30],
-                                               range_contained)),
-                             [-1, 1], [75, 50])
         return 75
     elif average_class_size < 40:
         # Classes with 30 to 39 students score third highest
-        if average_class_size >= 39:
-            return np.interp(np.tanh(np.interp(average_class_size, [39, 40],
-                                               range_contained)),
-                             [-1, 1], [50, 25])
         return 50
     elif average_class_size < 50:
         # Classes with 40 to 49 students score fourth highest
-        if average_class_size >= 49:
-            return np.interp(np.tanh(np.interp(average_class_size, [49, 50],
-                                               range_contained)),
-                             [-1, 1], [25, 0])
         return 25
     else:
         # Classes that are 50 or more students receive no credit
@@ -163,10 +133,10 @@ class TestRankingAgent(unittest.TestCase):
     def brute_force_attribute_mix(self):
         best = 0
         best_attribute_mix = [0, 0]
-        step_size = 1000
+        step = 100
 
-        for amount_1 in range(0, int(self.agent_1._budget) + step_size, step_size):
-            for amount_2 in range(0, int(self.agent_1._budget) + step_size, step_size):
+        for amount_1 in range(0, int(self.agent_1._budget) + step, step):
+            for amount_2 in range(0, int(self.agent_1._budget) + step, step):
                 # Check the budget constraint.
                 if amount_1 + amount_2 > int(self.agent_1._budget):
                     continue
@@ -186,6 +156,63 @@ class TestRankingAgent(unittest.TestCase):
         attribute_mix = self.agent_1._optimize_attribute_mix()
         print('attribute_mix = ', attribute_mix)
         self.brute_force_attribute_mix()
+
+    def test_optimize_attribute_initial_conditions(self):
+        for _ in range(5):
+            random_array = np.random.random(len(self.agent_1._inventory))
+            x0 = (random_array / random_array.sum()) * self.agent_1._budget
+            sol = basinhopping(self.agent_1.objective_function, x0,
+                               T=10, stepsize=100,
+                               accept_test=self.agent_1._basin_hopping_bounds,
+                               # callback=print_fun,
+                               minimizer_kwargs={'method': 'BFGS'},
+                               niter=2_000)
+            print("x0 = ", x0, "  Budget = ", self.agent_1._budget,
+                  "  Solution = ", [int(sol.x[0]), int(sol.x[1])],
+                  "  objective function result = ",
+                  self.agent_1.objective_function([sol.x[0], sol.x[1]]))
+        self.agent_1.step()
+        random_array = np.random.random(len(self.agent_1._inventory))
+        x0 = (random_array / random_array.sum()) * self.agent_1._budget
+        sol = basinhopping(self.agent_1.objective_function, x0,
+                           T=10, stepsize=100,
+                           accept_test=self.agent_1._basin_hopping_bounds,
+                           # callback=print_fun,
+                           minimizer_kwargs={'method': 'BFGS'},
+                           niter=2_000)
+        print("x0 = ", x0, "  Budget = ", self.agent_1._budget,
+              "  Solution = ", [int(sol.x[0]), int(sol.x[1])],
+              "  objective function result = ",
+              self.agent_1.objective_function([sol.x[0], sol.x[1]]))
+
+    def test_optimize_attribute_bin_hopping(self):
+        random_array = np.random.random(len(self.agent_1._inventory))
+        x0 = (random_array / random_array.sum()) * self.agent_1._budget
+        print("x0 = ", x0)
+        sol = basinhopping(self.agent_1.objective_function, x0,
+                           T=10, stepsize=100,
+                           accept_test=self.agent_1._basin_hopping_bounds,
+                           minimizer_kwargs={'method': 'BFGS'},
+                           niter=2_000)
+        print("x0 = ", x0, "  Budget = ", self.agent_1._budget,
+              "  Solution = ", [int(sol.x[0]), int(sol.x[1])],
+              "  objective function result = ",
+              self.agent_1.objective_function([sol.x[0], sol.x[1]]))
+        self.agent_1.step()
+        x0 = [self.agent_1.random.uniform(0, self.agent_1._budget),
+              self.agent_1.random.uniform(0, self.agent_1._budget)]
+        while sum(x0) > self.agent_1._budget:
+            x0 = [self.agent_1.random.uniform(0, self.agent_1._budget),
+                  self.agent_1.random.uniform(0, self.agent_1._budget)]
+        sol = basinhopping(self.agent_1.objective_function, x0,
+                           T=10, stepsize=100,
+                           accept_test=self.agent_1._basin_hopping_bounds,
+                           minimizer_kwargs={'method': 'BFGS'},
+                           niter=2_000)
+        print("x0 = ", x0, "  Budget = ", self.agent_1._budget,
+              "  Solution = ", [int(sol.x[0]), int(sol.x[1])],
+              "  objective function result = ",
+              self.agent_1.objective_function([sol.x[0], sol.x[1]]))
 
     def test_buy_attributes(self):
         """Test the buy attributes function."""
@@ -211,6 +238,7 @@ class TestRankingAgent(unittest.TestCase):
 
     def test_step(self):
         """Test the step function."""
+
         self.agent_1.step()
         print(self.agent_1.attribute_funding)
         print(self.agent_1.attribute_valuation)
