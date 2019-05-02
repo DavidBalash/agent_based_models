@@ -23,7 +23,7 @@ DISPLAY_PRODUCTION_PLOTS = False
 DISPLAY_SCORE_PLOTS = False
 
 # Model settings
-number_of_steps = 3
+number_of_steps = 10
 number_of_agents = 2
 
 
@@ -157,9 +157,8 @@ if RUN_VOLATILITY:
 
     plt.show()
 else:
-    # Manually step though the number of steps
-    for step in range(number_of_steps):
-        model.step()
+    # Run the model for the number of steps
+    model.run(number_of_steps)
 
     display_ranking(model, all_rows=False)
 

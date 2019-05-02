@@ -171,6 +171,7 @@ class RankingAgent(Agent):
         for _ in range(number_of_initial_values):
             random_array = np.random.random(len(self._inventory))
             x0 = (random_array / random_array.sum()) * self._budget
+            LOGGER.debug("Initial x0 = ", x0)
             solution = basinhopping(self.objective_function, x0,
                                     T=temperature, stepsize=step_size,
                                     accept_test=self._basin_hopping_bounds,
@@ -181,6 +182,8 @@ class RankingAgent(Agent):
             if result < best_result:
                 best_result = result
                 best_attribute_mix = attribute_mix
+
+        LOGGER.debug("Best mix = ", best_attribute_mix)
 
         return best_attribute_mix
 
@@ -222,6 +225,15 @@ class RankingAgent(Agent):
             weight = attribute.weightage(self.model.schedule.time)
             self.attribute_weight[attribute.name].append(weight)
             self.score += value * weight
+
+    def __repr__(self):
+        """The representation function will return the string representation.
+
+        :return: The string representation of the ranking_agent class.
+        """
+
+        return 'Agent[unique_id={}]'.format(self.unique_id)
+
 
 # Agent based models
 # Copyright (C) 2019 David Balash

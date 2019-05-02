@@ -28,11 +28,11 @@ def setup_logging(logger_name=None):
 
     # Create a logger
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.ERROR)
 
     # Create a console handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.ERROR)
     console_handler.setFormatter(formatter)
 
     # Create a file handler
@@ -44,7 +44,7 @@ def setup_logging(logger_name=None):
         # This will start a new log file each run of the program.
         file_handler.doRollover()
 
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.ERROR)
     file_handler.setFormatter(formatter)
 
     # Add the handlers to the logger
