@@ -1,5 +1,6 @@
 """Ranking system package."""
 from .attribute import Attribute
+from .class_size_attribute import ClassSizeAttribute
 from .logging_utils import setup_logging
 from .math_utils import smooth_step
 from .plot_utils import dictionary_line_plot
@@ -14,12 +15,14 @@ from .plot_utils import table_column_to_list
 from .ranking_agent import RankingAgent
 from .ranking_dynamics_volatility import RankingDynamicsVolatility
 from .ranking_model import RankingModel
+from .spending_per_student_attribute import SpendingPerStudentAttribute
 
-__all__ = ["Attribute", "setup_logging", "dictionary_line_plot",
-           "display_attribute", "display_ranking", "display_ranking_dynamics",
-           "display_societal_value", "find_values_by_agent", "line_plot",
-           "list_line_plot", "smooth_step", "table_column_to_list",
-           "RankingAgent", "RankingDynamicsVolatility", "RankingModel"]
+__all__ = ["Attribute", "ClassSizeAttribute", "setup_logging",
+           "dictionary_line_plot", "display_attribute", "display_ranking",
+           "display_ranking_dynamics", "display_societal_value",
+           "find_values_by_agent", "line_plot", "list_line_plot", "smooth_step",
+           "table_column_to_list", "RankingAgent", "RankingDynamicsVolatility",
+           "RankingModel", "SpendingPerStudentAttribute"]
 
 __title__ = "ranking_system"
 __author__ = "David Balash"

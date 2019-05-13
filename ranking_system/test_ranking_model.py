@@ -1,43 +1,14 @@
 """Unit test for the Ranking Model class."""
 import unittest
-from ranking_system import Attribute
+from ranking_system import ClassSizeAttribute
 from ranking_system import RankingModel
+from ranking_system import SpendingPerStudentAttribute
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
 __license__ = "GPLv3"
 __version__ = "0.0.1"
 __status__ = "Prototype"
-
-
-def weightage_function_1(time_step):
-    """Weightage function."""
-    return [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3][time_step]
-
-
-def weightage_function_2(time_step):
-    """Weightage function."""
-    return [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7][time_step]
-
-
-def valuation_function_1(value):
-    """Valuation function."""
-    return value
-
-
-def valuation_function_2(value):
-    """Valuation function."""
-    return value
-
-
-def production_function_1(dollars, production_efficiency):
-    """Production function."""
-    return dollars * production_efficiency
-
-
-def production_function_2(dollars, production_efficiency):
-    """Production function."""
-    return dollars * production_efficiency
 
 
 # pylint: disable=protected-access
@@ -51,14 +22,7 @@ class TestRankingModel(unittest.TestCase):
         random_seed = 1234
 
         # Create attributes.
-        self.attribute_1 = Attribute('attribute_1', weightage_function_1,
-                                     valuation_function_1,
-                                     production_function_1)
-        self.attribute_2 = Attribute('attribute_2', weightage_function_2,
-                                     valuation_function_2,
-                                     production_function_2)
-
-        self.attributes = [self.attribute_1, self.attribute_2]
+        self.attributes = [ClassSizeAttribute(), SpendingPerStudentAttribute()]
         self.number_of_agents = 2
         self.settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}
 

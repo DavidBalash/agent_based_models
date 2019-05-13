@@ -1,9 +1,10 @@
 """Unit test for the Ranking Agent class."""
 import numpy as np
 import unittest
-from ranking_system import Attribute
+from ranking_system import ClassSizeAttribute
 from ranking_system import RankingAgent
 from ranking_system import RankingModel
+from ranking_system import SpendingPerStudentAttribute
 from scipy.optimize import basinhopping
 
 __author__ = "David Balash"
@@ -18,87 +19,6 @@ def print_fun(x, f, accepted):
         print("x = ", x, "  objective = ", f)
 
 
-# Create weightage functions that will return the weight used for time t
-# The sum of the weightage functions at time t must add up to one
-
-def weightage_average_spending_per_student(t):
-    """Weight given to average spending per student attribute
-       Decreases at time t greater than 5"""
-    return 0.7 if t < 1 else 0.66
-
-
-def weightage_average_class_size(t):
-    """Weight given to average class size attribute
-       Increases at time t greater than 5"""
-    return 0.3 if t < 1 else 0.34
-
-
-# Create valuation functions
-# Return the true valuation of attribute i at time t
-
-def valuation_average_spending_per_student(average_spending_per_student):
-    """Valuation given to the average spending per student attribute"""
-
-    # Step like function for average spending per student
-    if average_spending_per_student > 10_000:
-        # Spending more than 10,000 per student receives the most credit
-        return 100
-    elif average_spending_per_student > 7_500:
-        # Spending between 7,500 and 10,000 per student scores second highest
-        return 75
-    elif average_spending_per_student > 5_000:
-        # Spending between 5,000 and 7,500 per student scores third highest
-        return 50
-    elif average_spending_per_student > 2_500:
-        # Spending between 2,500 and 5,000 per student scores fourth highest
-        return 25
-    else:
-        # Spending less than 2,500 per student receives no credit
-        return 0
-
-
-def valuation_average_class_size(average_class_size):
-    """Valuation given to the average class size attribute"""
-
-    # Step like function for average class size
-    if average_class_size < 20:
-        # Classes with fewer than 20 students receive the most credit
-        return 100
-    elif average_class_size < 30:
-        # Classes with 20 to 29 students score second highest
-        return 75
-    elif average_class_size < 40:
-        # Classes with 30 to 39 students score third highest
-        return 50
-    elif average_class_size < 50:
-        # Classes with 40 to 49 students score fourth highest
-        return 25
-    else:
-        # Classes that are 50 or more students receive no credit
-        return 0
-
-
-# Create production functions
-
-def production_average_spending_per_student(dollars, production_efficiency):
-    """Production function for the average spending per student attribute"""
-    # Educational: spending on instruction, research, and student services
-    # Non-educational: spending on sports, dorms, and hospitals
-    # Universities will differ in the percentage of dollars spent on educational
-    # versus non-educational resources.
-    # The educational spending percentage may change from year to year.
-    educational_spending_percentage = production_efficiency
-    return dollars * educational_spending_percentage
-
-
-def production_average_class_size(dollars, production_efficiency):
-    """Production function for the average class size attribute"""
-    max_value = 15_000
-    steepness = 3 * production_efficiency
-    return 200 - (200 * np.tanh(np.interp(dollars, [0, max_value],
-                                          [0, steepness])))
-
-
 # pylint: disable=protected-access
 class TestRankingAgent(unittest.TestCase):
     """Unit test class to test the RankingAgent class functions."""
@@ -111,14 +31,7 @@ class TestRankingAgent(unittest.TestCase):
 
         # Create a list of M attributes
         # (name, weightage function)
-        self.attributes = [Attribute('Average Spending Per Student',
-                                     weightage_average_spending_per_student,
-                                     valuation_average_spending_per_student,
-                                     production_average_spending_per_student),
-                           Attribute('Average Class Size',
-                                     weightage_average_class_size,
-                                     valuation_average_class_size,
-                                     production_average_class_size)]
+        self.attributes = [SpendingPerStudentAttribute(), ClassSizeAttribute()]
 
         self.number_of_agents = 2
         self.settings = {'expenditure_min': 5_000, 'expenditure_max': 15_000}

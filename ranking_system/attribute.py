@@ -1,6 +1,7 @@
 """The Attribute class represents a purchasable attribute
    in the ranking system."""
 import logging
+import matplotlib.pyplot as plt
 
 __author__ = "David Balash"
 __copyright__ = "Copyright 2019, Agent Based Models"
@@ -14,6 +15,7 @@ LOGGER = logging.getLogger('ranking_system.attribute')
 
 class Attribute:
     """The Attribute class."""
+
     def __init__(self, name, weightage_function, valuation_function,
                  production_function):
         """Initialize the attribute.
@@ -73,6 +75,17 @@ class Attribute:
         weight = self._weightage_function(time_step)
         LOGGER.debug('weight = %f', weight)
         return weight
+
+    def display_production(self, production_efficiency, display_range):
+        productions = []
+        for amount in range(display_range):
+            productions.append(self._production_function(amount,
+                                                         production_efficiency))
+
+        _, axes = plt.subplots()
+        axes.plot(productions)
+        axes.set(xlabel='amount', ylabel=self.name,
+                 title=self.name + ' by amount')
 
     def __repr__(self):
         """The representation function will return the string representation.
